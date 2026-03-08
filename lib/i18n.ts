@@ -1,0 +1,236 @@
+export type Lang = 'es' | 'en'
+
+// Step names shown in progress bar — order: Contacto → Alma → Audiencia → Negocio → Visión
+export const STEP_NAMES = {
+  es: ['Contacto', 'Tu alma', 'Tu audiencia', 'Tu negocio', 'Tu visión'],
+  en: ['Contact', 'Your soul', 'Your audience', 'Your business', 'Your vision'],
+} as const
+
+export const t = {
+  es: {
+    chooseLanguage: 'Elige tu idioma',
+    welcome: 'Hola',
+    welcomeSubtitle: 'Antes de trabajar contigo, necesitamos entenderte de verdad.\nEsto no es un formulario — es una conversación.\nToma unos 12 minutos.',
+    welcomeBullet1: 'Qué mueve tu marca por dentro',
+    welcomeBullet2: 'A quién le cambias la vida',
+    welcomeBullet3: 'Hacia dónde vas y por qué',
+    begin: 'Empecemos →',
+
+    // Step 2 — Contact
+    step2Title: 'Primero lo primero',
+    step2Subtitle: 'Necesitamos saber cómo encontrarte y dónde estás construyendo.',
+    fullName: 'Tu nombre completo',
+    brandName: 'Nombre de tu marca o proyecto',
+    brandNameHint: 'Si aún no tienes nombre, escribe cómo lo llamas tú.',
+    industry: 'Industria o nicho',
+    industryHint: 'Sé específico. "Salud" es vago. "Nutrición para mujeres mayores de 40" es perfecto.',
+    country: 'País',
+    activeChannels: '¿Dónde tienes presencia hoy?',
+    activeChannelsHint: 'Selecciona todos los que usas, aunque sea poco.',
+    email: 'Tu email',
+    whatsapp: 'WhatsApp (con código de país)',
+    whatsappHint: 'Ej: +57 300 123 4567',
+
+    // Step 3 — Soul (moved before business)
+    step3Title: 'El alma de tu marca',
+    step3Subtitle: 'Las marcas que duran no se construyen con estrategias. Se construyen con propósito. Cuéntanos el tuyo.',
+    purpose: '¿Por qué existe esta marca en el mundo?',
+    purposeHint: 'No lo que vendes — para qué existe. Escríbelo sin filtros, como si nadie más lo fuera a leer.',
+    values: 'Los valores que definen cómo operas (hasta 4)',
+    valuesHint: 'No los que suenan bonito. Los que te guían cuando nadie está mirando.',
+    valueName: 'Valor',
+    valueDescription: '¿Cómo se ve este valor en una decisión real?',
+    addValue: '+ Agregar valor',
+    neverList: 'Tu lista de nunca — cosas que JAMÁS harías como marca (hasta 3)',
+    neverListHint: 'Tus límites son tu identidad. Sé honesto.',
+    addNever: '+ Agregar',
+
+    // Step 4 — Audience
+    step4Title: 'A quién le cambias la vida',
+    step4Subtitle: 'No "todo el mundo". Una persona específica con un problema real. Cuéntanos quién es.',
+    icpDemographic: '¿Quién es? Descríbelo como si fuera una persona real',
+    icpDemographicHint: 'Edad, qué hace, dónde vive, cómo es su día a día. Mientras más específico, mejor.',
+    icpPain: '¿Con qué lucha todos los días?',
+    icpPainHint: 'El problema que lo mantiene despierto. El que siente en el estómago.',
+    icpDesire: '¿Qué quiere lograr de verdad?',
+    icpDesireHint: 'No el resultado funcional — la transformación. Cómo quiere sentirse.',
+
+    // Step 5 — Business (moved after soul+audience)
+    step5Title: 'Tu propuesta de valor',
+    step5Subtitle: 'Ahora que sabemos quién eres y a quién sirves, cuéntanos qué ofreces y desde dónde.',
+    productDescription: '¿Qué ofreces exactamente?',
+    productDescriptionHint: 'Descríbelo como se lo explicarías a un amigo que no sabe nada del tema.',
+    productPrice: '¿A qué precio lo vendes? (USD)',
+    productPriceHint: 'Si tienes varios precios, pon el más común.',
+    businessStage: '¿En qué momento estás?',
+    stageStarting: 'Empezando — estoy construyendo, aún no tengo clientes fijos',
+    stageSelling: 'Vendiendo — ya tengo clientes y quiero escalar',
+    stageScaling: 'Escalando — tengo base y quiero el siguiente nivel',
+    monthlyRevenue: '¿Cuánto estás generando por mes aproximadamente? (USD)',
+    monthlyRevenueHint: 'Orden de magnitud está bien. Esta información es confidencial.',
+
+    // Step 6 — Vision
+    step6Title: 'El mundo que imaginas',
+    step6Subtitle: 'El lugar al que vas define cada decisión que tomas hoy.',
+    vision: 'Si todo sale bien en los próximos 3 años, ¿cómo se ve tu vida y tu marca?',
+    visionHint: 'Sé ambicioso. Sé específico. ¿Cuántas personas alcanzas? ¿Cómo te reconocen? ¿Qué impacto dejaste?',
+
+    thankYouTitle: '¡Recibido, [nombre]!',
+    thankYouSubtitle: 'Nuestro equipo va a analizar todo lo que compartiste y construir tu estrategia personalizada.\nTe contactamos en las próximas 24 horas.',
+    thankYouNote: 'Si tienes algo más que agregar, escríbenos directo al WhatsApp.',
+
+    next: 'Continuar →',
+    back: '← Atrás',
+    saving: 'Guardando...',
+    save: 'Guardar',
+    channels: {
+      instagram: 'Instagram',
+      tiktok: 'TikTok',
+      youtube: 'YouTube',
+      email: 'Email / Newsletter',
+      linkedin: 'LinkedIn',
+      facebook: 'Facebook',
+      twitter: 'X / Twitter',
+      other: 'Otro',
+    },
+    dashboard: 'Panel',
+    clients: 'Clientes',
+    newClient: 'Nuevo Cliente',
+    status: {
+      pending: 'Esperando cliente',
+      client_done: 'En Revisión',
+      team_done: 'Equipo listo',
+      complete: 'Finalizado',
+    },
+    tabs: {
+      profile: 'Perfil Profundo',
+      content: 'Contenido',
+      funnel: 'Funnel',
+      gate: 'Gate Filosófico',
+      finalize: 'Finalizar',
+    },
+    finalize: 'Finalizar Onboarding',
+    finalizeConfirm: '¿Estás seguro? Esto creará la carpeta en Gitea y generará el blueprint.',
+    giteaSuccess: 'Carpeta creada en Gitea ✓',
+    pdfSuccess: 'Blueprint generado ✓',
+    linkExpired: 'Este enlace no es válido o ha expirado.',
+    linkInvalid: 'Enlace inválido',
+  },
+  en: {
+    chooseLanguage: 'Choose your language',
+    welcome: 'Hey',
+    welcomeSubtitle: "Before we work together, we need to truly understand you.\nThis isn't a form — it's a conversation.\nTakes about 12 minutes.",
+    welcomeBullet1: "What drives your brand from the inside",
+    welcomeBullet2: "Whose life you're changing",
+    welcomeBullet3: 'Where you\'re going and why',
+    begin: "Let's go →",
+
+    // Step 2 — Contact
+    step2Title: 'First things first',
+    step2Subtitle: 'We need to know how to reach you and where you\'re building.',
+    fullName: 'Your full name',
+    brandName: 'Brand or project name',
+    brandNameHint: "If you don't have a name yet, write what you call it.",
+    industry: 'Industry or niche',
+    industryHint: 'Be specific. "Health" is vague. "Nutrition for women over 40" is perfect.',
+    country: 'Country',
+    activeChannels: 'Where do you have a presence today?',
+    activeChannelsHint: 'Select all you use, even if just a little.',
+    email: 'Your email',
+    whatsapp: 'WhatsApp (with country code)',
+    whatsappHint: 'E.g.: +1 305 123 4567',
+
+    // Step 3 — Soul
+    step3Title: 'The soul of your brand',
+    step3Subtitle: "Brands that last aren't built with strategies. They're built with purpose. Tell us yours.",
+    purpose: 'Why does this brand exist in the world?',
+    purposeHint: "Not what you sell — why it exists. Write it unfiltered, as if no one else will read it.",
+    values: 'The values that define how you operate (up to 4)',
+    valuesHint: "Not the ones that sound good. The ones that guide you when no one is watching.",
+    valueName: 'Value',
+    valueDescription: 'How does this value show up in a real decision?',
+    addValue: '+ Add value',
+    neverList: "Your never list — things you'd NEVER do as a brand (up to 3)",
+    neverListHint: 'Your limits are your identity. Be honest.',
+    addNever: '+ Add',
+
+    // Step 4 — Audience
+    step4Title: "Who you're changing lives for",
+    step4Subtitle: 'Not "everyone". One specific person with a real problem. Tell us who they are.',
+    icpDemographic: 'Who are they? Describe them as if they were a real person',
+    icpDemographicHint: 'Age, what they do, where they live, what their day looks like. The more specific, the better.',
+    icpPain: 'What do they struggle with every day?',
+    icpPainHint: 'The problem that keeps them up at night. The one they feel in their gut.',
+    icpDesire: 'What do they really want to achieve?',
+    icpDesireHint: "Not the functional result — the transformation. How they want to feel.",
+
+    // Step 5 — Business
+    step5Title: 'Your value proposition',
+    step5Subtitle: "Now that we know who you are and who you serve, tell us what you offer and where you stand.",
+    productDescription: 'What exactly do you offer?',
+    productDescriptionHint: "Describe it like you'd explain it to a friend who knows nothing about it.",
+    productPrice: 'At what price? (USD)',
+    productPriceHint: 'If you have multiple prices, put the most common one.',
+    businessStage: 'Where are you right now?',
+    stageStarting: "Building — I'm starting out, no steady clients yet",
+    stageSelling: 'Selling — I have clients and want to scale',
+    stageScaling: 'Scaling — I have a base and want the next level',
+    monthlyRevenue: 'How much are you generating per month approximately? (USD)',
+    monthlyRevenueHint: 'Order of magnitude is fine. This is confidential.',
+
+    // Step 6 — Vision
+    step6Title: 'The world you imagine',
+    step6Subtitle: 'Where you\'re going defines every decision you make today.',
+    vision: 'If everything goes well in the next 3 years, what does your life and brand look like?',
+    visionHint: 'Be ambitious. Be specific. How many people do you reach? How are you known? What impact did you leave?',
+
+    thankYouTitle: 'Received, [name]!',
+    thankYouSubtitle: "Our team will analyze everything you shared and build your personalized strategy.\nWe'll reach out within 24 hours.",
+    thankYouNote: 'If you have anything to add, message us directly on WhatsApp.',
+
+    next: 'Continue →',
+    back: '← Back',
+    saving: 'Saving...',
+    save: 'Save',
+    channels: {
+      instagram: 'Instagram',
+      tiktok: 'TikTok',
+      youtube: 'YouTube',
+      email: 'Email / Newsletter',
+      linkedin: 'LinkedIn',
+      facebook: 'Facebook',
+      twitter: 'X / Twitter',
+      other: 'Other',
+    },
+    dashboard: 'Dashboard',
+    clients: 'Clients',
+    newClient: 'New Client',
+    status: {
+      pending: 'Waiting for client',
+      client_done: 'In Review',
+      team_done: 'Team Done',
+      complete: 'Complete',
+    },
+    tabs: {
+      profile: 'Deep Profile',
+      content: 'Content',
+      funnel: 'Funnel',
+      gate: 'Philosophical Gate',
+      finalize: 'Finalize',
+    },
+    finalize: 'Finalize Onboarding',
+    finalizeConfirm: 'Are you sure? This will create the Gitea folder and generate the blueprint.',
+    giteaSuccess: 'Gitea folder created ✓',
+    pdfSuccess: 'Blueprint generated ✓',
+    linkExpired: 'This link is not valid or has expired.',
+    linkInvalid: 'Invalid link',
+  },
+} as const
+
+export function getText(lang: Lang, key: string): string {
+  const keys = key.split('.')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let val: any = t[lang]
+  for (const k of keys) val = val?.[k]
+  return typeof val === 'string' ? val : key
+}

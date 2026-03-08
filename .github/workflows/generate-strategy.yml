@@ -1,0 +1,87 @@
+name: Generate Client Strategy
+
+on:
+  push:
+    paths:
+      - 'clientes/**/interview.json'
+  workflow_dispatch:
+    inputs:
+      client_slug:
+        description: 'Client folder slug (e.g. brand-name)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: self-hosted   # Your Windows machine — claude is authenticated here
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect client slug
+        id: detect
+        shell: powershell
+        run: |
+          $slug = "${{ github.event.inputs.client_slug }}"
+          if (-not $slug) {
+            $changed = git diff HEAD~1 --name-only 2>$null | Select-String 'interview\.json' | Select-Object -First 1
+            if ($changed) {
+              $parts = $changed.ToString().Trim().Split('/')
+              $slug = $parts[1]
+            }
+          }
+          if (-not $slug) {
+            Write-Error "Could not detect client slug"
+            exit 1
+          }
+          Write-Host "Client slug: $slug"
+          echo "slug=$slug" >> $env:GITHUB_OUTPUT
+
+      - name: Validate interview file
+        shell: powershell
+        run: |
+          $slug = "${{ steps.detect.outputs.slug }}"
+          $file = "clientes/$slug/interview.json"
+          if (-not (Test-Path $file)) {
+            Write-Error "Interview file not found: $file"
+            exit 1
+          }
+          Write-Host "Interview file found: $file"
+
+      - name: Generate strategy via Claude subprocess
+        shell: powershell
+        env:
+          CLIENT_SLUG: ${{ steps.detect.outputs.slug }}
+          GITEA_URL: ${{ secrets.GITEA_URL }}
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          GITEA_REPO_OWNER: ${{ secrets.GITEA_REPO_OWNER }}
+          GITEA_REPO_NAME: ${{ secrets.GITEA_REPO_NAME }}
+          # Point claude to the authenticated user's profile (needed when runner runs as SYSTEM)
+          HOME: C:\Users\geren
+          USERPROFILE: C:\Users\geren
+          APPDATA: C:\Users\geren\AppData\Roaming
+          LOCALAPPDATA: C:\Users\geren\AppData\Local
+        run: node scripts/generate-strategy.mjs
+
+      - name: Commit strategy files to GitHub
+        shell: powershell
+        env:
+          CLIENT_SLUG: ${{ steps.detect.outputs.slug }}
+        run: |
+          git config user.email "engine@avilion.com"
+          git config user.name "Avilion Strategy Engine"
+          git add clientes/
+          $diff = git diff --cached --name-only
+          if ($diff) {
+            git commit -m "strategy: auto-generate docs for $env:CLIENT_SLUG [skip ci]"
+            git push
+            Write-Host "Strategy files committed and pushed"
+          } else {
+            Write-Host "No changes to commit"
+          }

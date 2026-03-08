@@ -1,0 +1,344 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── AGENCY AUTH ─────────────────────────────────────────────
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String
+  passwordHash  String
+  createdAt     DateTime       @default(now())
+  sessions      Session[]
+  notifications Notification[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+// ─── TEAM ────────────────────────────────────────────────────
+model TeamMember {
+  id        String   @id @default(cuid())
+  name      String
+  role      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+// ─── CLIENTS ─────────────────────────────────────────────────
+model Client {
+  id             String    @id @default(cuid())
+  name           String
+  brandName      String?
+  email          String?
+  whatsapp       String?
+  channels       String?
+  industry       String
+  country        String
+  language       String    @default("es")
+  phase          Int       @default(1)
+  status         String    @default("active")
+  onboardingDate DateTime  @default(now())
+  archivedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  profile            ClientProfile?
+  emotionalCheckins  EmotionalCheckin[]
+  itrScores          ItrScore[]
+  funnelMetrics      FunnelMetric[]
+  contentMetrics     ContentMetric[]
+  ringActivations    RingActivation[]
+  alerts             Alert[]
+  onboardingSessions OnboardingSession[]
+  blueprints         Blueprint[]
+}
+
+model ClientProfile {
+  id                     String  @id @default(cuid())
+  clientId               String  @unique
+
+  // Soul
+  purpose                String  @default("")
+  values                 String  @default("")
+  neverList              String  @default("")
+  vision3Years           String  @default("")
+
+  // ICP Basic
+  icpDemographic         String  @default("")
+  icpPain                String  @default("")
+  icpDesire              String  @default("")
+  icpObjection           String  @default("")
+
+  // ICP Deep
+  icpMicrosegment        String  @default("")
+  icpInternalDialogue    String  @default("")
+  icpDeepPain            String  @default("")
+  icpDeepDesire          String  @default("")
+  icpCounterargument     String  @default("")
+
+  // Archetypes
+  emotionalArchetype     String  @default("")
+  emotionalArchetypeDesc String  @default("")
+  audienceArchetype      String  @default("")
+  audienceArchetypeDesc  String  @default("")
+  archetypeRelationship  String  @default("")
+
+  // Content
+  contentEmotion         String  @default("")
+  contentTransformation  String  @default("")
+  contentPillars         String  @default("")
+  voiceAdjectives        String  @default("")
+  voiceVocabulary        String  @default("")
+  voiceForbidden         String  @default("")
+  toneByContext          String  @default("")
+  channelFormats         String  @default("")
+
+  // Funnel
+  funnelType             Int     @default(0)
+  funnelReason           String  @default("")
+  pricingEntry           String  @default("")
+  pricingCore            String  @default("")
+  pricingPremium         String  @default("")
+  valuePromise           String  @default("")
+
+  // Philosophical Gate
+  gateCanDeliver         Boolean @default(false)
+  gateGenuinePurpose     Boolean @default(false)
+  gateAutoServesPurpose  Boolean @default(false)
+  gateMeasurableResults  Boolean @default(false)
+  gateResult             String  @default("")
+  gateDiagnosisNotes     String  @default("")
+  initialEmotionalState  Int     @default(3)
+
+  // Gitea
+  giteaFolderCreated     Boolean @default(false)
+  giteaFolderPath        String  @default("")
+
+  client                 Client  @relation(fields: [clientId], references: [id])
+}
+
+// ─── CLIENT PERFORMANCE ──────────────────────────────────────
+model EmotionalCheckin {
+  id          String   @id @default(cuid())
+  clientId    String
+  level       Int
+  notes       String   @default("")
+  triggeredBy String   @default("manual")
+  createdAt   DateTime @default(now())
+  client      Client   @relation(fields: [clientId], references: [id])
+}
+
+model ItrScore {
+  id          String   @id @default(cuid())
+  clientId    String
+  month       Int
+  year        Int
+  emotional   Int      @default(0)
+  pedagogical Int      @default(0)
+  strategic   Int      @default(0)
+  narrative   Int      @default(0)
+  technical   Int      @default(0)
+  perceptive  Int      @default(0)
+  total       Int      @default(0)
+  scorePct    Float    @default(0)
+  createdAt   DateTime @default(now())
+  client      Client   @relation(fields: [clientId], references: [id])
+}
+
+model FunnelMetric {
+  id          String   @id @default(cuid())
+  clientId    String
+  funnelType  Int
+  clarity     Float    @default(0)
+  coherence   Float    @default(0)
+  leads       Int      @default(0)
+  conversions Int      @default(0)
+  revenue     Float    @default(0)
+  measuredAt  DateTime @default(now())
+  client      Client   @relation(fields: [clientId], references: [id])
+}
+
+model ContentMetric {
+  id          String   @id @default(cuid())
+  clientId    String
+  channel     String
+  format      String
+  pillar      Int
+  engagement  Float    @default(0)
+  reach       Int      @default(0)
+  publishedAt DateTime @default(now())
+  client      Client   @relation(fields: [clientId], references: [id])
+}
+
+// ─── OPERATIONS ──────────────────────────────────────────────
+model RingActivation {
+  id          String    @id @default(cuid())
+  clientId    String
+  ringNumber  Int
+  ringName    String
+  phase       Int
+  status      String    @default("pending")
+  activatedAt DateTime?
+  createdAt   DateTime  @default(now())
+  client      Client    @relation(fields: [clientId], references: [id])
+}
+
+model CapacityLog {
+  id             String   @id @default(cuid())
+  date           DateTime @default(now())
+  activeClients  Int
+  teamSize       Int
+  capacityPct    Float
+  bottleneckRing Int?
+  notes          String?
+}
+
+model Alert {
+  id            String    @id @default(cuid())
+  clientId      String
+  type          String
+  severity      String
+  message       String
+  triggeredAt   DateTime  @default(now())
+  resolvedAt    DateTime?
+  autoGenerated Boolean   @default(true)
+  client        Client    @relation(fields: [clientId], references: [id])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  message   String
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id])
+}
+
+// ─── AGENCY INTELLIGENCE ─────────────────────────────────────
+model AgencyPattern {
+  id               String   @id @default(cuid())
+  period           String
+  funnelType       Int
+  industry         String
+  avgItr           Float    @default(0)
+  avgConversion    Float    @default(0)
+  sampleSize       Int      @default(0)
+  lastCalculatedAt DateTime @default(now())
+}
+
+model ContentIntelligence {
+  id            String   @id @default(cuid())
+  pillar        Int
+  industry      String
+  avgEngagement Float    @default(0)
+  topFormat     String
+  period        String
+  createdAt     DateTime @default(now())
+}
+
+// ─── CLIENT AUTH ─────────────────────────────────────────────
+model ClientUser {
+  id           String            @id @default(cuid())
+  email        String            @unique
+  passwordHash String
+  sessionId    String            @unique
+  session      OnboardingSession @relation(fields: [sessionId], references: [id])
+  sessions     ClientSession[]
+  createdAt    DateTime          @default(now())
+  mustResetPwd Boolean           @default(true)
+}
+
+model ClientSession {
+  id        String     @id @default(cuid())
+  token     String     @unique @default(cuid())
+  clientId  String
+  client    ClientUser @relation(fields: [clientId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime   @default(now())
+}
+
+// ─── ONBOARDING PORTAL ───────────────────────────────────────
+model OnboardingSession {
+  id                   String    @id @default(cuid())
+  clientId             String?
+  clientName           String    @default("")
+  brandName            String    @default("")
+  email                String    @default("")
+  whatsapp             String    @default("")
+  language             String    @default("es")
+  channels             String    @default("")
+  industry             String    @default("")
+  country              String    @default("")
+  productDescription   String    @default("")
+  productPrice         Float     @default(0)
+  businessStage        String    @default("")
+  monthlyRevenue       Float     @default(0)
+  purpose              String    @default("")
+  values               String    @default("")
+  neverList            String    @default("")
+  vision3Years         String    @default("")
+  icpDemographic       String    @default("")
+  icpPain              String    @default("")
+  icpDesire            String    @default("")
+  agencyContext        String    @default("")
+  businessType         String    @default("")
+  revenueModel         String    @default("")
+  specificProduct      String    @default("")
+  targetAudience       String    @default("")
+  token                String    @unique @default(cuid())
+  expiresAt            DateTime
+  status               String    @default("pending")
+  agencyReviewApproved Boolean   @default(false)
+  completedAt          DateTime?
+  ipAddress            String?
+  createdAt            DateTime  @default(now())
+  client               Client?   @relation(fields: [clientId], references: [id])
+  questions            InterviewQuestion[]
+  blueprints           Blueprint[]
+  clientUser           ClientUser?
+}
+
+model InterviewQuestion {
+  id                String   @id @default(cuid())
+  sessionId         String
+  questionText      String
+  category          String
+  orderNum          Int
+  whyAsking         String
+  originalGenerated String
+  session           OnboardingSession @relation(fields: [sessionId], references: [id])
+  answers           InterviewAnswer[]
+}
+
+model InterviewAnswer {
+  id          String   @id @default(cuid())
+  questionId  String
+  answerText  String
+  autoSavedAt DateTime @default(now())
+  question    InterviewQuestion @relation(fields: [questionId], references: [id])
+}
+
+model Blueprint {
+  id               String    @id @default(cuid())
+  clientId         String
+  sessionId        String
+  version          Int       @default(1)
+  contentHtml      String
+  contentMd        String
+  agencyApprovedAt DateTime?
+  deliveredAt      DateTime?
+  createdAt        DateTime  @default(now())
+  client           Client    @relation(fields: [clientId], references: [id])
+  session          OnboardingSession @relation(fields: [sessionId], references: [id])
+}

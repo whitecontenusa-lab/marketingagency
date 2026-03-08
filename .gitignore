@@ -1,0 +1,14 @@
+.env
+.env.local
+.env.*.local
+prisma/dev.db
+prisma/dev.db-journal
+*.db
+node_modules/
+.next/
+out/
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+scripts/tmp/
+.DS_Store
+Thumbs.db

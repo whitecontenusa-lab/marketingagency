@@ -1,0 +1,44 @@
+name: Generate Client Strategy
+
+on:
+  push:
+    paths:
+      - 'clientes/**/interview.json'
+
+jobs:
+  generate:
+    runs-on: self-hosted   # act_runner on your Windows machine
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Detect client slug
+        id: detect
+        run: |
+          CHANGED=$(git diff HEAD~1 --name-only | grep 'interview\.json' | head -1)
+          SLUG=$(echo "$CHANGED" | awk -F'/' '{print $2}')
+          echo "slug=$SLUG" >> $GITHUB_OUTPUT
+
+      - name: Generate strategy via Claude subprocess
+        env:
+          CLIENT_SLUG: ${{ steps.detect.outputs.slug }}
+          GITEA_URL: ${{ secrets.GITEA_URL }}
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          GITEA_REPO_OWNER: ${{ secrets.GITEA_REPO_OWNER }}
+          GITEA_REPO_NAME: ${{ secrets.GITEA_REPO_NAME }}
+        run: node scripts/generate-strategy.mjs
+
+      - name: Commit strategy files
+        env:
+          CLIENT_SLUG: ${{ steps.detect.outputs.slug }}
+        run: |
+          git config user.email "engine@avilion.com"
+          git config user.name "Avilion Strategy Engine"
+          git add clientes/
+          git diff --cached --quiet && echo "No changes" || \
+            git commit -m "strategy: auto-generate docs for $CLIENT_SLUG [skip ci]"
+          git push
