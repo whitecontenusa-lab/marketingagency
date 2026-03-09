@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getSession } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { spawn } from 'child_process'
-import * as os from 'os'
-import * as path from 'path'
-import * as fs from 'fs'
+import { runClaudeSubprocess } from '@/lib/claude'
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!await getSession()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { id } = await params
   const intel = await db.marketIntelligence.findUnique({ where: { sessionId: id } })
   return NextResponse.json(intel)
 }
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!await getSession()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { id } = await params
 
   const session = await db.onboardingSession.findUnique({ where: { id } })
@@ -47,7 +47,7 @@ Respond in ${lang}. Output ONLY this JSON object:
 
 Be specific to ${session.industry} in ${session.country}. Use real market knowledge. Include 3-4 competitors/categories, 3-4 trends, 8 keywords.`
 
-  const raw = await runClaude(prompt)
+  const raw = await runClaudeSubprocess(prompt, 120_000)
   const match = raw.match(/\{[\s\S]*\}/)
   if (!match) {
     return NextResponse.json({ error: 'Could not parse AI response', raw: raw.slice(0, 500) }, { status: 500 })
@@ -86,38 +86,4 @@ Be specific to ${session.industry} in ${session.country}. Use real market knowle
   })
 
   return NextResponse.json(intel)
-}
-
-async function runClaude(prompt: string): Promise<string> {
-  const spawnEnv = { ...process.env }
-  delete spawnEnv['CLAUDECODE']
-  delete spawnEnv['CLAUDE_CODE_ENTRYPOINT']
-  spawnEnv['HOME'] = 'C:\\Users\\geren'
-  spawnEnv['USERPROFILE'] = 'C:\\Users\\geren'
-  spawnEnv['APPDATA'] = 'C:\\Users\\geren\\AppData\\Roaming'
-  spawnEnv['LOCALAPPDATA'] = 'C:\\Users\\geren\\AppData\\Local'
-
-  const runDir = path.join(os.tmpdir(), `claude-market-${Date.now()}`)
-  fs.mkdirSync(runDir, { recursive: true })
-
-  return new Promise((resolve, reject) => {
-    const proc = spawn('claude', ['--print', '--dangerously-skip-permissions'], {
-      env: spawnEnv, shell: true,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      cwd: runDir,
-    })
-
-    let stdout = ''
-    proc.stdout.on('data', (d: Buffer) => { stdout += d.toString() })
-    const timer = setTimeout(() => { proc.kill(); reject(new Error('Timeout')) }, 120_000)
-
-    proc.on('close', (code: number) => {
-      clearTimeout(timer)
-      try { fs.rmSync(runDir, { recursive: true, force: true }) } catch { /* ignore */ }
-      if (code !== 0 && !stdout) reject(new Error(`Claude exited ${code}`))
-      else resolve(stdout)
-    })
-
-    proc.stdin.write(prompt, 'utf8', () => proc.stdin.end())
-  })
 }
