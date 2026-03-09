@@ -128,26 +128,27 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     }
   }
 
-  // Extract agency learnings from this approved session (non-blocking)
-  const insights = [
-    `Industry ${session.industry} in ${session.country} matched Funnel ${strategy.funnelType}`,
-    `${strategy.emotionalArchetype} archetype fit ${session.businessStage} stage at $${session.productPrice} price point`,
-    session.icpPain ? `ICP pain "${String(session.icpPain).slice(0, 80)}" aligned with Funnel ${strategy.funnelType}` : null,
-  ].filter(Boolean) as string[]
-
-  db.$transaction(
-    insights.map(insight =>
-      db.agencyLearning.create({
-        data: {
-          industry: session.industry,
-          funnelType: Number(strategy.funnelType ?? 0),
-          archetype: String(strategy.emotionalArchetype ?? ''),
-          insight,
-          sourceId: id,
-        },
-      })
-    )
-  ).catch(err => console.error('[intelligence] Learning extraction failed:', err))
+  // Auto-seed checklist if empty
+  const existingItems = await db.checklistItem.count({ where: { sessionId: id } })
+  if (existingItems === 0) {
+    const defaults = [
+      'Logo y variantes entregados',
+      'Accesos a redes sociales configurados',
+      'Credenciales del portal enviadas al cliente',
+      'Guía de marca compartida con el equipo',
+      'Banco de fotografías recibido',
+      'Revisión de copy aprobada',
+      'Calendario editorial del primer mes listo',
+    ]
+    await db.checklistItem.createMany({
+      data: defaults.map(label => ({
+        sessionId: id,
+        key: label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''),
+        label,
+        completed: false,
+      })),
+    })
+  }
 
   return NextResponse.json({ ok: true, folder: folderName, giteaErrors, tempPassword, clientEmail: session.email })
 }
