@@ -32,6 +32,16 @@ export async function runClaudeSubprocess(
   fs.mkdirSync(runDir, { recursive: true })
 
   return new Promise((resolve, reject) => {
+    // settled flag prevents double-resolve/reject after timeout fires
+    let settled = false
+    const safeResolve = (v: string) => { if (!settled) { settled = true; resolve(v) } }
+    const safeReject  = (e: Error)  => { if (!settled) { settled = true; reject(e)  } }
+
+    // cleanup is idempotent — safe to call from both timeout and close paths
+    const cleanup = () => {
+      try { fs.rmSync(runDir, { recursive: true, force: true }) } catch { /* ignore */ }
+    }
+
     const proc = spawn('claude', ['--print', '--dangerously-skip-permissions'], {
       env: spawnEnv,
       shell: true,
@@ -46,22 +56,33 @@ export async function runClaudeSubprocess(
 
     const timer = setTimeout(() => {
       proc.kill('SIGTERM')
-      reject(new Error(`Claude subprocess timed out after ${timeoutMs}ms. stdout: ${stdout.length} chars. stderr: ${stderr.slice(0, 300)}`))
+      cleanup()
+      safeReject(new Error(`Claude subprocess timed out after ${timeoutMs}ms. stdout: ${stdout.length} chars. stderr: ${stderr.slice(0, 300)}`))
     }, timeoutMs)
 
-    proc.on('close', (code: number) => {
+    proc.on('close', (code: number | null) => {
       clearTimeout(timer)
-      try { fs.rmSync(runDir, { recursive: true, force: true }) } catch { /* ignore */ }
-      if (code !== 0 && !stdout) {
-        reject(new Error(`Claude exited ${code}: ${stderr.slice(0, 300)}`))
+      cleanup()
+      if ((code === null || code !== 0) && !stdout) {
+        safeReject(new Error(`Claude exited ${code}: ${stderr.slice(0, 300)}`))
       } else {
-        resolve(stdout)
+        safeResolve(stdout)
       }
     })
 
     proc.on('error', (err: Error) => {
       clearTimeout(timer)
-      reject(err)
+      cleanup()
+      safeReject(err)
+    })
+
+    // Handle EPIPE on stdin (process exited before reading) — not a fatal error
+    proc.stdin.on('error', (err: NodeJS.ErrnoException) => {
+      if (err.code !== 'EPIPE') {
+        clearTimeout(timer)
+        cleanup()
+        safeReject(err)
+      }
     })
 
     proc.stdin.write(prompt, 'utf8', () => proc.stdin.end())
