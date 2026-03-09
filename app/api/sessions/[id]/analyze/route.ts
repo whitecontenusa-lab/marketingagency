@@ -22,9 +22,9 @@ async function ensureMarketIntelligence(
     return {
       positioning: existing.positioning,
       rawSummary: existing.rawSummary,
-      competitors: (() => { try { return JSON.parse(existing.competitors) } catch { return [] } })(),
-      trends:      (() => { try { return JSON.parse(existing.trends) } catch { return [] } })(),
-      keywords:    (() => { try { return JSON.parse(existing.keywords) } catch { return [] } })(),
+      competitors: (() => { try { return JSON.parse(existing.competitors) } catch { console.warn(`[market-intelligence] Failed to parse competitors JSON for session ${sessionId}`); return [] } })(),
+      trends:      (() => { try { return JSON.parse(existing.trends) } catch { console.warn(`[market-intelligence] Failed to parse trends JSON for session ${sessionId}`); return [] } })(),
+      keywords:    (() => { try { return JSON.parse(existing.keywords) } catch { console.warn(`[market-intelligence] Failed to parse keywords JSON for session ${sessionId}`); return [] } })(),
     }
   }
 
@@ -167,7 +167,10 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       )
       return NextResponse.json({ generating: true, slug })
     } catch (err) {
-      // If push failed, reset status so team can retry
+      // If push failed, reset status to client_done so team can retry.
+      // This reset happens BEFORE the local fallback below, so if generateStrategy()
+      // succeeds the session ends up in whatever state that function sets — the
+      // status is never left stuck at "generating" after a GitHub push failure.
       await db.onboardingSession.update({ where: { id }, data: { status: 'client_done' } })
       console.error('GitHub push failed, falling back to local generation:', err)
     }
