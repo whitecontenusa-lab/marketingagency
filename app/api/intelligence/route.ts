@@ -34,21 +34,23 @@ export async function POST(req: NextRequest) {
     `ICP pain "${session.icpPain?.slice(0, 80)}" matched with Funnel ${funnelType}`,
   ].filter(Boolean)
 
-  const created = await db.$transaction(
-    insights.map(insight =>
-      db.agencyLearning.create({
-        data: {
-          industry: session.industry,
-          funnelType,
-          archetype,
-          insight,
-          sourceId: sessionId,
-        },
-      })
-    )
-  )
+  const upserted: Awaited<ReturnType<typeof db.agencyLearning.upsert>>[] = []
+  for (const insight of insights) {
+    const record = await db.agencyLearning.upsert({
+      where: { sourceId_insight: { sourceId: sessionId, insight } },
+      create: {
+        industry: session.industry,
+        funnelType,
+        archetype,
+        insight,
+        sourceId: sessionId,
+      },
+      update: {}, // no-op on duplicate
+    })
+    upserted.push(record)
+  }
 
-  return NextResponse.json({ extracted: created.length, learnings: created })
+  return NextResponse.json({ extracted: upserted.length, learnings: upserted })
 }
 
 // GET /api/intelligence?industry=X&funnelType=Y — fetch relevant learnings

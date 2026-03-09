@@ -457,6 +457,8 @@ model AgencyLearning {
   insight    String
   sourceId   String   // sessionId of origin
   createdAt  DateTime @default(now())
+
+  @@unique([sourceId, insight])
 }
 
 // ─── PHASE C: CONTENT & CAMPAIGN ENGINE ──────────────────────
