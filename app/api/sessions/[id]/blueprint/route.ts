@@ -67,6 +67,12 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
           })
         }
 
+        // B5 — clear generating status so dashboard stops polling and team sees blueprint ready
+        await db.onboardingSession.update({
+          where: { id },
+          data: { status: 'client_done' },
+        })
+
         return NextResponse.json(blueprint)
       }
 
