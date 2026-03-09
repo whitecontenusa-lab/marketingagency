@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getSession } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { spawn } from 'child_process'
-import * as os from 'os'
-import * as path from 'path'
-import * as fs from 'fs'
+import { runClaudeSubprocess } from '@/lib/claude'
 
 const PLATFORM_FORMATS: Record<string, string[]> = {
   instagram: ['post', 'reel', 'story', 'carousel'],
@@ -28,7 +26,7 @@ BRAND CONTEXT:
 - Purpose: ${session.purpose}
 
 STRATEGY — CONTENIDO MADRE:
-${contenidoDoc.slice(0, 3000)}
+${contenidoDoc.slice(0, 8000)}
 
 TARGET PLATFORMS: ${platforms.join(', ')}
 
@@ -49,48 +47,8 @@ Output a JSON array of exactly ${count} objects with this structure:
 Write all text in ${session.language === 'en' ? 'English' : 'Spanish'}. Be specific, creative, and aligned with the brand's emotional archetype. Output ONLY the JSON array.`
 }
 
-async function runClaude(prompt: string): Promise<string> {
-  const spawnEnv = { ...process.env }
-  delete spawnEnv['CLAUDECODE']
-  delete spawnEnv['CLAUDE_CODE_ENTRYPOINT']
-  spawnEnv['HOME'] = 'C:\\Users\\geren'
-  spawnEnv['USERPROFILE'] = 'C:\\Users\\geren'
-  spawnEnv['APPDATA'] = 'C:\\Users\\geren\\AppData\\Roaming'
-  spawnEnv['LOCALAPPDATA'] = 'C:\\Users\\geren\\AppData\\Local'
-
-  const runDir = path.join(os.tmpdir(), `claude-content-${Date.now()}`)
-  fs.mkdirSync(runDir, { recursive: true })
-
-  return new Promise((resolve, reject) => {
-    const proc = spawn('claude', ['--print', '--dangerously-skip-permissions'], {
-      env: spawnEnv,
-      shell: true,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      cwd: runDir,
-    })
-
-    let stdout = ''
-    let stderr = ''
-    proc.stdout.on('data', (d: Buffer) => { stdout += d.toString() })
-    proc.stderr.on('data', (d: Buffer) => { stderr += d.toString() })
-
-    const timer = setTimeout(() => {
-      proc.kill()
-      reject(new Error('Claude subprocess timed out after 90s'))
-    }, 90_000)
-
-    proc.on('close', (code: number) => {
-      clearTimeout(timer)
-      try { fs.rmSync(runDir, { recursive: true, force: true }) } catch { /* ignore */ }
-      if (code !== 0 && !stdout) reject(new Error(`Claude exited ${code}: ${stderr.slice(0, 200)}`))
-      else resolve(stdout)
-    })
-
-    proc.stdin.write(prompt, 'utf8', () => proc.stdin.end())
-  })
-}
-
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!await getSession()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { id } = await params
   const body = await req.json()
   const { campaignId, platforms, count = 6 } = body as {
@@ -114,9 +72,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   let contenidoDoc = ''
   try {
     const strategy = JSON.parse(blueprint.contentMd)
-    contenidoDoc = strategy.documents?.contenido ?? blueprint.contentMd.slice(0, 4000)
+    contenidoDoc = strategy.documents?.contenido ?? blueprint.contentMd.slice(0, 8000)
   } catch {
-    contenidoDoc = blueprint.contentMd.slice(0, 4000)
+    contenidoDoc = blueprint.contentMd.slice(0, 8000)
   }
 
   const prompt = buildPrompt(
@@ -128,7 +86,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   let raw: string
   try {
-    raw = await runClaude(prompt)
+    raw = await runClaudeSubprocess(prompt, 90_000)
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err)
     return NextResponse.json({ error: msg }, { status: 500 })
