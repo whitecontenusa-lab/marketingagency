@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { spawn } from 'child_process'
-import * as os from 'os'
-import * as path from 'path'
-import * as fs from 'fs'
+import { getSession } from '@/lib/auth'
+import { runClaudeSubprocess } from '@/lib/claude'
 
 interface ValidationResult {
   pieceId: string
@@ -13,6 +11,8 @@ interface ValidationResult {
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!await getSession()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { id } = await params
   const { pieceIds } = await req.json() as { pieceIds: string[] }
 
@@ -70,7 +70,7 @@ Be strict but fair. Only flag genuine violations, not style preferences.`
 
   let raw: string
   try {
-    raw = await runClaude(prompt)
+    raw = await runClaudeSubprocess(prompt, 90_000)
   } catch (err: unknown) {
     return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 })
   }
@@ -86,38 +86,4 @@ Be strict but fair. Only flag genuine violations, not style preferences.`
   }
 
   return NextResponse.json({ results })
-}
-
-async function runClaude(prompt: string): Promise<string> {
-  const spawnEnv = { ...process.env }
-  delete spawnEnv['CLAUDECODE']
-  delete spawnEnv['CLAUDE_CODE_ENTRYPOINT']
-  spawnEnv['HOME'] = 'C:\\Users\\geren'
-  spawnEnv['USERPROFILE'] = 'C:\\Users\\geren'
-  spawnEnv['APPDATA'] = 'C:\\Users\\geren\\AppData\\Roaming'
-  spawnEnv['LOCALAPPDATA'] = 'C:\\Users\\geren\\AppData\\Local'
-
-  const runDir = path.join(os.tmpdir(), `claude-validate-${Date.now()}`)
-  fs.mkdirSync(runDir, { recursive: true })
-
-  return new Promise((resolve, reject) => {
-    const proc = spawn('claude', ['--print', '--dangerously-skip-permissions'], {
-      env: spawnEnv, shell: true,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      cwd: runDir,
-    })
-
-    let stdout = ''
-    proc.stdout.on('data', (d: Buffer) => { stdout += d.toString() })
-    const timer = setTimeout(() => { proc.kill(); reject(new Error('Timeout')) }, 90_000)
-
-    proc.on('close', (code: number) => {
-      clearTimeout(timer)
-      try { fs.rmSync(runDir, { recursive: true, force: true }) } catch { /* ignore */ }
-      if (code !== 0 && !stdout) reject(new Error(`Claude exited ${code}`))
-      else resolve(stdout)
-    })
-
-    proc.stdin.write(prompt, 'utf8', () => proc.stdin.end())
-  })
 }
