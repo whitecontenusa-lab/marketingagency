@@ -9,11 +9,16 @@ export async function getSession() {
 
   const session = await db.session.findUnique({
     where: { token },
-    include: { user: true },
+    include: { user: { include: { workspace: true } } },
   })
 
   if (!session || session.expiresAt < new Date()) return null
   return session
+}
+
+export async function getWorkspaceId(): Promise<string | null> {
+  const session = await getSession()
+  return session?.user?.workspaceId ?? null
 }
 
 export async function requireSession() {

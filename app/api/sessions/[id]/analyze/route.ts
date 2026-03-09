@@ -4,6 +4,31 @@ import { db } from '@/lib/db'
 import { githubPushFile, githubConfigured } from '@/lib/github'
 import { generateStrategy } from '@/lib/strategy'
 
+async function enrichWithIntelligence(sessionId: string, industry: string): Promise<{
+  marketIntelligence: Record<string, unknown> | null
+  agencyLearnings: string[]
+}> {
+  const [marketIntel, learnings] = await Promise.all([
+    db.marketIntelligence.findUnique({ where: { sessionId } }),
+    db.agencyLearning.findMany({
+      where: { industry },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    }),
+  ])
+
+  return {
+    marketIntelligence: marketIntel ? {
+      positioning: marketIntel.positioning,
+      rawSummary: marketIntel.rawSummary,
+      competitors: (() => { try { return JSON.parse(marketIntel.competitors) } catch { return [] } })(),
+      trends: (() => { try { return JSON.parse(marketIntel.trends) } catch { return [] } })(),
+      keywords: (() => { try { return JSON.parse(marketIntel.keywords) } catch { return [] } })(),
+    } : null,
+    agencyLearnings: learnings.map(l => l.insight),
+  }
+}
+
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const teamSession = await getSession()
   if (!teamSession) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -49,9 +74,18 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     }
 
     try {
+      // Enrich interview data with market intelligence and agency learnings
+      const { marketIntelligence, agencyLearnings } = await enrichWithIntelligence(id, session.industry)
+
+      const enrichedData = {
+        ...interviewData,
+        ...(marketIntelligence ? { marketIntelligence } : {}),
+        ...(agencyLearnings.length ? { agencyLearnings } : {}),
+      }
+
       await githubPushFile(
         `clientes/${slug}/interview.json`,
-        JSON.stringify(interviewData, null, 2),
+        JSON.stringify(enrichedData, null, 2),
         `analyze: trigger strategy generation for ${session.clientName}`,
       )
       return NextResponse.json({ generating: true, slug })

@@ -1,6 +1,18 @@
-import { requireSession } from '@/lib/auth'
+import { requireSession, getWorkspaceId } from '@/lib/auth'
 import { db } from '@/lib/db'
 import Link from 'next/link'
+import { Suspense } from 'react'
+
+async function QueueBadge() {
+  const count = await db.approvalItem.count({ where: { status: 'pending' } })
+  if (count === 0) return null
+  return (
+    <Link href="/dashboard/cola" className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900 transition">
+      Cola
+      <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">{count}</span>
+    </Link>
+  )
+}
 
 const STAGES = [
   { key: 'pending',    label: 'Esperando cliente', color: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
@@ -10,14 +22,22 @@ const STAGES = [
 ]
 
 export default async function DashboardPage() {
-  await requireSession()
+  const teamSession = await requireSession()
+  const workspaceId = teamSession.user.workspaceId
+  const workspace = teamSession.user.workspace
 
   const sessions = await db.onboardingSession.findMany({
+    where: workspaceId ? { workspaceId } : {},
     orderBy: { createdAt: 'desc' },
     include: {
       blueprints: { orderBy: { createdAt: 'desc' }, take: 1 },
+      proposals: { orderBy: { createdAt: 'desc' }, take: 1, select: { status: true } },
+      marketIntelligence: { select: { id: true } },
+      _count: { select: { contentPieces: true, checklist: true } },
     },
   })
+
+  const usage = { current: sessions.length, max: workspace?.planMaxClients ?? 10 }
 
   const counts = {
     total: sessions.length,
@@ -36,11 +56,22 @@ export default async function DashboardPage() {
       {/* Nav */}
       <nav className="bg-white border-b border-zinc-100 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center gap-3">
-          <span className="font-bold text-zinc-900 text-lg">Avilion</span>
+          <span className="font-bold text-zinc-900 text-lg">{workspace?.name ?? 'Avilion'}</span>
           <span className="text-zinc-300">|</span>
           <span className="text-sm text-zinc-500">Panel de operaciones</span>
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+            workspace?.plan === 'agency' ? 'bg-purple-50 text-purple-700' :
+            workspace?.plan === 'pro' ? 'bg-blue-50 text-blue-700' :
+            'bg-zinc-100 text-zinc-500'
+          }`}>{workspace?.plan ?? 'starter'}</span>
         </div>
         <div className="flex items-center gap-3">
+          <Suspense fallback={null}><QueueBadge /></Suspense>
+          <Link href="/dashboard/cola" className="text-sm text-zinc-500 hover:text-zinc-900 transition">Cola</Link>
+          <Link href="/dashboard/settings" className="text-sm text-zinc-500 hover:text-zinc-900 transition">
+            Ajustes
+          </Link>
+          <span className="text-xs text-zinc-400">{usage.current}/{usage.max} clientes</span>
           <Link href="/dashboard/nuevo"
             className="bg-zinc-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-zinc-700 transition">
             + Nuevo cliente
@@ -102,6 +133,15 @@ export default async function DashboardPage() {
                       {items.map(session => {
                         const hasBlueprint = session.blueprints.length > 0
                         const approved = !!session.blueprints[0]?.agencyApprovedAt
+                        // Lightweight health signal (no extra DB call)
+                        const healthPts =
+                          (session.completedAt ? 1 : 0) +
+                          (hasBlueprint ? 1 : 0) +
+                          (approved ? 1 : 0) +
+                          (session.marketIntelligence ? 1 : 0) +
+                          (session.proposals[0]?.status !== 'draft' ? 1 : 0) +
+                          (session._count.contentPieces >= 4 ? 1 : 0)
+                        const healthColor = healthPts >= 5 ? 'bg-green-500' : healthPts >= 3 ? 'bg-blue-400' : 'bg-amber-400'
                         return (
                           <Link key={session.id} href={`/dashboard/cliente/${session.id}`}
                             className="flex items-center justify-between bg-white rounded-xl border border-zinc-100 px-5 py-4 hover:border-zinc-300 hover:shadow-sm transition group">
@@ -122,6 +162,8 @@ export default async function DashboardPage() {
                             </div>
 
                             <div className="flex items-center gap-3 flex-shrink-0 ml-4">
+                              {/* Health dot */}
+                              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${healthColor}`} title={`Salud: ${healthPts}/6`} />
                               {hasBlueprint && !approved && (
                                 <span className="text-xs bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full font-medium">
                                   Estrategia lista

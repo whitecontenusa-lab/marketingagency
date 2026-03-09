@@ -128,6 +128,27 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     }
   }
 
+  // Extract agency learnings from this approved session (non-blocking)
+  const insights = [
+    `Industry ${session.industry} in ${session.country} matched Funnel ${strategy.funnelType}`,
+    `${strategy.emotionalArchetype} archetype fit ${session.businessStage} stage at $${session.productPrice} price point`,
+    session.icpPain ? `ICP pain "${String(session.icpPain).slice(0, 80)}" aligned with Funnel ${strategy.funnelType}` : null,
+  ].filter(Boolean) as string[]
+
+  db.$transaction(
+    insights.map(insight =>
+      db.agencyLearning.create({
+        data: {
+          industry: session.industry,
+          funnelType: Number(strategy.funnelType ?? 0),
+          archetype: String(strategy.emotionalArchetype ?? ''),
+          insight,
+          sourceId: id,
+        },
+      })
+    )
+  ).catch(err => console.error('[intelligence] Learning extraction failed:', err))
+
   return NextResponse.json({ ok: true, folder: folderName, giteaErrors, tempPassword, clientEmail: session.email })
 }
 

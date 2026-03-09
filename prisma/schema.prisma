@@ -7,13 +7,30 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── WORKSPACE (MULTI-TENANT) ─────────────────────────────────
+model Workspace {
+  id             String              @id @default(cuid())
+  name           String
+  slug           String              @unique
+  logoUrl        String?
+  primaryColor   String              @default("#18181b")
+  plan           String              @default("starter") // free, starter, pro, agency
+  planMaxClients Int                 @default(10)
+  status         String              @default("active") // active, suspended, cancelled
+  createdAt      DateTime            @default(now())
+  users          User[]
+  onboardingSessions OnboardingSession[]
+}
+
 // ─── AGENCY AUTH ─────────────────────────────────────────────
 model User {
   id            String         @id @default(cuid())
   email         String         @unique
   name          String
   passwordHash  String
+  workspaceId   String?
   createdAt     DateTime       @default(now())
+  workspace     Workspace?     @relation(fields: [workspaceId], references: [id])
   sessions      Session[]
   notifications Notification[]
 }
@@ -296,6 +313,7 @@ model OnboardingSession {
   revenueModel         String    @default("")
   specificProduct      String    @default("")
   targetAudience       String    @default("")
+  workspaceId          String?
   token                String    @unique @default(cuid())
   expiresAt            DateTime
   status               String    @default("pending")
@@ -304,9 +322,18 @@ model OnboardingSession {
   ipAddress            String?
   createdAt            DateTime  @default(now())
   client               Client?   @relation(fields: [clientId], references: [id])
+  workspace            Workspace? @relation(fields: [workspaceId], references: [id])
   questions            InterviewQuestion[]
   blueprints           Blueprint[]
   clientUser           ClientUser?
+  assets               OnboardingAsset[]
+  checklist            ChecklistItem[]
+  proposals            Proposal[]
+  invoices             Invoice[]
+  approvalItems        ApprovalItem[]
+  campaigns            Campaign[]
+  contentPieces        ContentPiece[]
+  marketIntelligence   MarketIntelligence?
 }
 
 model InterviewQuestion {
@@ -341,4 +368,147 @@ model Blueprint {
   createdAt        DateTime  @default(now())
   client           Client    @relation(fields: [clientId], references: [id])
   session          OnboardingSession @relation(fields: [sessionId], references: [id])
+}
+
+// ─── PHASE B: ONBOARDING CHECKLIST ───────────────────────────
+model OnboardingAsset {
+  id         String            @id @default(cuid())
+  sessionId  String
+  type       String            // logo, brand_guide, fonts, social_handles, photos, other
+  label      String
+  fileName   String
+  filePath   String
+  fileSize   Int
+  mimeType   String            @default("")
+  uploadedAt DateTime          @default(now())
+  session    OnboardingSession @relation(fields: [sessionId], references: [id])
+}
+
+model ChecklistItem {
+  id          String            @id @default(cuid())
+  sessionId   String
+  key         String            // logo_uploaded, brand_colors, social_handles, etc.
+  label       String
+  completed   Boolean           @default(false)
+  completedAt DateTime?
+  notes       String            @default("")
+  session     OnboardingSession @relation(fields: [sessionId], references: [id])
+
+  @@unique([sessionId, key])
+}
+
+// ─── PHASE B: PROPOSAL SYSTEM ────────────────────────────────
+model Proposal {
+  id             String            @id @default(cuid())
+  sessionId      String
+  version        Int               @default(1)
+  status         String            @default("draft") // draft, sent, accepted, rejected, ghosted
+  diagnosis      String            @default("")
+  pricingEntry   Float             @default(0)
+  pricingCore    Float             @default(0)
+  pricingPremium Float             @default(0)
+  selectedTier   String?           // entry, core, premium
+  notes          String            @default("")
+  sentAt         DateTime?
+  respondedAt    DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  session        OnboardingSession @relation(fields: [sessionId], references: [id])
+  invoices       Invoice[]
+}
+
+// ─── PHASE B: BILLING ────────────────────────────────────────
+model Invoice {
+  id          String    @id @default(cuid())
+  proposalId  String?
+  sessionId   String
+  amount      Float
+  currency    String    @default("USD")
+  status      String    @default("pending") // pending, paid, overdue, cancelled
+  paymentUrl  String?
+  description String    @default("")
+  dueDate     DateTime?
+  paidAt      DateTime?
+  createdAt   DateTime  @default(now())
+  proposal    Proposal? @relation(fields: [proposalId], references: [id])
+  session     OnboardingSession @relation(fields: [sessionId], references: [id])
+}
+
+// ─── PHASE D: INTELLIGENCE EXPANSION ─────────────────────────
+model MarketIntelligence {
+  id          String            @id @default(cuid())
+  sessionId   String            @unique
+  industry    String
+  country     String
+  competitors String            @default("") // JSON array
+  trends      String            @default("") // JSON array
+  positioning String            @default("")
+  keywords    String            @default("") // JSON array
+  rawSummary  String            @default("")
+  generatedAt DateTime          @default(now())
+  session     OnboardingSession @relation(fields: [sessionId], references: [id])
+}
+
+model AgencyLearning {
+  id         String   @id @default(cuid())
+  industry   String
+  funnelType Int
+  archetype  String
+  insight    String
+  sourceId   String   // sessionId of origin
+  createdAt  DateTime @default(now())
+}
+
+// ─── PHASE C: CONTENT & CAMPAIGN ENGINE ──────────────────────
+model Campaign {
+  id          String            @id @default(cuid())
+  sessionId   String
+  name        String
+  objective   String            @default("")
+  status      String            @default("draft") // draft, active, paused, completed
+  channels    String            @default("") // comma-separated: instagram,tiktok,linkedin
+  startDate   DateTime?
+  endDate     DateTime?
+  notes       String            @default("")
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  session     OnboardingSession @relation(fields: [sessionId], references: [id])
+  pieces      ContentPiece[]
+}
+
+model ContentPiece {
+  id          String    @id @default(cuid())
+  sessionId   String
+  campaignId  String?
+  platform    String    // instagram, tiktok, facebook, linkedin, email, blog
+  format      String    // post, reel, story, carousel, video, email, article
+  hook        String    @default("")
+  body        String    @default("")
+  cta         String    @default("")
+  hashtags    String    @default("")
+  status      String    @default("draft") // draft, ready, scheduled, published
+  scheduledAt DateTime?
+  publishedAt DateTime?
+  aiGenerated Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  session     OnboardingSession @relation(fields: [sessionId], references: [id])
+  campaign    Campaign?         @relation(fields: [campaignId], references: [id])
+}
+
+// ─── PHASE B: HUMAN REVIEW QUEUE ─────────────────────────────
+model ApprovalItem {
+  id          String    @id @default(cuid())
+  type        String    // strategy_review, proposal_sent, campaign_change, ethical_flag
+  title       String
+  description String    @default("")
+  context     String    @default("") // JSON blob with relevant data
+  status      String    @default("pending") // pending, approved, rejected, skipped
+  priority    String    @default("normal") // normal, high, urgent
+  sessionId   String?
+  decidedBy   String?
+  decisionNote String   @default("")
+  decidedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  session     OnboardingSession? @relation(fields: [sessionId], references: [id])
 }

@@ -52,6 +52,21 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
             contentHtml: '',
           },
         })
+
+        // Auto-create review queue item for the team
+        const existingQueueItem = await db.approvalItem.findFirst({ where: { sessionId: id, type: 'strategy_review', status: 'pending' } })
+        if (!existingQueueItem) {
+          await db.approvalItem.create({
+            data: {
+              type: 'strategy_review',
+              title: `Estrategia lista — ${session.brandName || session.clientName}`,
+              description: 'El runner generó la estrategia. Revisar y aprobar para entregar al cliente.',
+              sessionId: id,
+              priority: 'high',
+            },
+          })
+        }
+
         return NextResponse.json(blueprint)
       }
 

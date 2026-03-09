@@ -3,6 +3,10 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { marked } from 'marked'
+import TabChecklist from './TabChecklist'
+import TabPropuestaFactura from './TabPropuestaFactura'
+import TabCampanas from './TabCampanas'
+import TabInteligencia from './TabInteligencia'
 
 interface Strategy {
   lang: string
@@ -39,6 +43,7 @@ export default function ClientePage() {
   const [session, setSession] = useState<Record<string, unknown> | null>(null)
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null)
   const [strategy, setStrategy] = useState<Strategy | null>(null)
+  const [activeTab, setActiveTab] = useState<'estrategia' | 'checklist' | 'propuesta' | 'campanas' | 'inteligencia'>('estrategia')
   const [activeDoc, setActiveDoc] = useState<'perfil' | 'funnel' | 'contenido' | 'itr' | 'roadmap'>('perfil')
   const [analyzing, setAnalyzing] = useState(false)
   const [generating, setGenerating] = useState(false) // runner is working
@@ -176,134 +181,174 @@ export default function ClientePage() {
           </div>
         </div>
 
+        {/* Main section tabs */}
+        <div className="flex border-b border-zinc-200 mb-6 bg-white rounded-t-xl overflow-hidden">
+          {([
+            { key: 'estrategia', label: 'Estrategia' },
+            { key: 'checklist', label: 'Checklist' },
+            { key: 'propuesta', label: 'Propuesta & Factura' },
+            { key: 'campanas', label: 'Campañas' },
+            { key: 'inteligencia', label: 'Inteligencia' },
+          ] as const).map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-5 py-3 text-sm font-medium transition border-b-2 ${
+                activeTab === tab.key
+                  ? 'border-zinc-900 text-zinc-900'
+                  : 'border-transparent text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         {/* Error */}
         {error && <div className="mb-4 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg px-4 py-3">{error}</div>}
         {approveResult && <div className="mb-4 bg-green-50 border border-green-100 text-green-700 text-sm rounded-lg px-4 py-3">{approveResult}</div>}
 
-        {/* NO STRATEGY YET */}
-        {!strategy && (
-          <div className="bg-white rounded-2xl border border-zinc-100 p-10 text-center">
-            <div className="w-16 h-16 bg-zinc-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">🧠</div>
-            <h3 className="text-xl font-bold text-zinc-900 mb-2">Estrategia no generada</h3>
-            <p className="text-zinc-500 text-sm mb-6 max-w-md mx-auto">
-              El cliente completó su entrevista. El motor de IA va a analizar sus respuestas y generar la estrategia completa: funnel, perfil profundo, contenido madre e ITR.
-            </p>
-            <button
-              onClick={analyze}
-              disabled={analyzing}
-              className="bg-zinc-900 text-white px-8 py-3 rounded-xl font-semibold hover:bg-zinc-700 transition disabled:opacity-50 flex items-center gap-2 mx-auto"
-            >
-              {analyzing ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Analizando con IA...
-                </>
-              ) : '⚡ Generar Estrategia con IA'}
-            </button>
-            {analyzing && (
-              <p className="text-xs text-zinc-400 mt-3">Esto toma 10-20 segundos. El ecosistema está procesando...</p>
-            )}
-          </div>
-        )}
+        {/* CHECKLIST TAB */}
+        {activeTab === 'checklist' && <TabChecklist sessionId={id} />}
 
-        {/* STRATEGY READY */}
-        {strategy && (
-          <div className="space-y-6">
-            {/* Strategy header */}
-            <div className="bg-zinc-900 text-white rounded-2xl p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-1">Estrategia generada por IA</p>
-                  <h3 className="text-xl font-bold">
-                    Funnel {strategy.funnelType} — {FUNNEL_NAMES[strategy.funnelType] ?? ''}
-                  </h3>
-                </div>
-                <span className="text-xs bg-white/10 px-3 py-1.5 rounded-full font-medium">
-                  {strategy.emotionalArchetype}
-                </span>
-              </div>
-              <p className="text-zinc-300 text-sm leading-relaxed mb-4">{strategy.funnelReason}</p>
-              <div className="bg-white/5 rounded-xl p-4">
-                <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-2">Simulación de mercado</p>
-                <div
-                  className="[&_p]:text-zinc-300 [&_p]:text-sm [&_p]:leading-relaxed [&_p]:mb-3 [&_strong]:text-white [&_strong]:font-semibold"
-                  dangerouslySetInnerHTML={{ __html: marked(strategy.simulationNotes) as string }}
-                />
-              </div>
-            </div>
+        {/* PROPUESTA & FACTURA TAB */}
+        {activeTab === 'propuesta' && <TabPropuestaFactura sessionId={id} />}
 
-            {/* Document tabs */}
-            <div className="bg-white rounded-2xl border border-zinc-100 overflow-hidden">
-              <div className="flex border-b border-zinc-100">
-                {(['perfil', 'funnel', 'contenido', 'itr', 'roadmap'] as const).map(doc => {
-                  if (doc === 'roadmap' && !strategy.documents.roadmap) return null
-                  return (
-                    <button
-                      key={doc}
-                      onClick={() => setActiveDoc(doc)}
-                      className={`flex-1 py-3 text-sm font-medium transition ${
-                        activeDoc === doc
-                          ? 'bg-zinc-900 text-white'
-                          : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'
-                      }`}
-                    >
-                      {doc === 'perfil' ? 'Perfil' :
-                       doc === 'funnel' ? 'Funnel' :
-                       doc === 'contenido' ? 'Contenido' :
-                       doc === 'itr' ? 'ITR' : '90 Días'}
-                    </button>
-                  )
-                })}
-              </div>
-              <div className="p-6">
-                <div
-                  className="prose prose-zinc prose-sm max-w-none overflow-auto max-h-[600px] [&_h1]:text-xl [&_h1]:font-bold [&_h1]:text-zinc-900 [&_h1]:mb-4 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-zinc-800 [&_h2]:mt-6 [&_h2]:mb-3 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-zinc-700 [&_h3]:mt-4 [&_h3]:mb-2 [&_li]:text-sm [&_li]:text-zinc-700 [&_p]:text-sm [&_p]:text-zinc-700 [&_p]:leading-relaxed [&_strong]:font-semibold [&_strong]:text-zinc-900 [&_ul]:space-y-1 [&_ol]:space-y-1"
-                  dangerouslySetInnerHTML={{ __html: marked(strategy.documents[activeDoc] ?? '') as string }}
-                />
-              </div>
-            </div>
+        {/* CAMPAÑAS TAB */}
+        {activeTab === 'campanas' && <TabCampanas sessionId={id} />}
 
-            {/* Approve section */}
-            {!isApproved ? (
-              <div className="bg-white rounded-2xl border border-zinc-100 p-6 flex items-center justify-between">
-                <div>
-                  <h4 className="font-semibold text-zinc-900 mb-1">¿La estrategia es correcta?</h4>
-                  <p className="text-sm text-zinc-500">Al aprobar, los archivos se publican en Gitea y el ecosistema se activa para este cliente.</p>
-                </div>
-                <div className="flex gap-3 flex-shrink-0 ml-6">
-                  <button
-                    onClick={analyze}
-                    disabled={analyzing || approving}
-                    className="border border-zinc-200 text-zinc-700 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-zinc-50 transition disabled:opacity-50"
-                  >
-                    {analyzing ? 'Regenerando...' : '↺ Regenerar'}
-                  </button>
-                  <button
-                    onClick={approve}
-                    disabled={approving || analyzing}
-                    className="bg-zinc-900 text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-zinc-700 transition disabled:opacity-50"
-                  >
-                    {approving ? 'Publicando...' : '✓ Aprobar y Publicar'}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="bg-green-50 border border-green-100 rounded-2xl p-6">
-                  <p className="font-semibold text-green-800 mb-1">✓ Estrategia aprobada y publicada</p>
-                  <p className="text-sm text-green-700">Los archivos están en Gitea. El ecosistema está activo para este cliente.</p>
-                  <p className="text-xs text-green-600 mt-2">Aprobado: {blueprint?.agencyApprovedAt ? new Date(blueprint.agencyApprovedAt).toLocaleString('es-CO') : ''}</p>
-                </div>
-                {clientCredentials && (
-                  <ClientCredentialsCard
-                    email={clientCredentials.email}
-                    password={clientCredentials.password}
-                    sessionId={id}
-                  />
+        {/* INTELIGENCIA TAB */}
+        {activeTab === 'inteligencia' && <TabInteligencia sessionId={id} />}
+
+        {/* ESTRATEGIA TAB */}
+        {activeTab === 'estrategia' && (
+          <>
+            {/* NO STRATEGY YET */}
+            {!strategy && (
+              <div className="bg-white rounded-2xl border border-zinc-100 p-10 text-center">
+                <div className="w-16 h-16 bg-zinc-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">🧠</div>
+                <h3 className="text-xl font-bold text-zinc-900 mb-2">Estrategia no generada</h3>
+                <p className="text-zinc-500 text-sm mb-6 max-w-md mx-auto">
+                  El cliente completó su entrevista. El motor de IA va a analizar sus respuestas y generar la estrategia completa: funnel, perfil profundo, contenido madre e ITR.
+                </p>
+                <button
+                  onClick={analyze}
+                  disabled={analyzing}
+                  className="bg-zinc-900 text-white px-8 py-3 rounded-xl font-semibold hover:bg-zinc-700 transition disabled:opacity-50 flex items-center gap-2 mx-auto"
+                >
+                  {analyzing ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Analizando con IA...
+                    </>
+                  ) : '⚡ Generar Estrategia con IA'}
+                </button>
+                {analyzing && (
+                  <p className="text-xs text-zinc-400 mt-3">Esto toma 10-20 segundos. El ecosistema está procesando...</p>
                 )}
               </div>
             )}
-          </div>
+
+            {/* STRATEGY READY */}
+            {strategy && (
+              <div className="space-y-6">
+                {/* Strategy header */}
+                <div className="bg-zinc-900 text-white rounded-2xl p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-1">Estrategia generada por IA</p>
+                      <h3 className="text-xl font-bold">
+                        Funnel {strategy.funnelType} — {FUNNEL_NAMES[strategy.funnelType] ?? ''}
+                      </h3>
+                    </div>
+                    <span className="text-xs bg-white/10 px-3 py-1.5 rounded-full font-medium">
+                      {strategy.emotionalArchetype}
+                    </span>
+                  </div>
+                  <p className="text-zinc-300 text-sm leading-relaxed mb-4">{strategy.funnelReason}</p>
+                  <div className="bg-white/5 rounded-xl p-4">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-2">Simulación de mercado</p>
+                    <div
+                      className="[&_p]:text-zinc-300 [&_p]:text-sm [&_p]:leading-relaxed [&_p]:mb-3 [&_strong]:text-white [&_strong]:font-semibold"
+                      dangerouslySetInnerHTML={{ __html: marked(strategy.simulationNotes) as string }}
+                    />
+                  </div>
+                </div>
+
+                {/* Document tabs */}
+                <div className="bg-white rounded-2xl border border-zinc-100 overflow-hidden">
+                  <div className="flex border-b border-zinc-100">
+                    {(['perfil', 'funnel', 'contenido', 'itr', 'roadmap'] as const).map(doc => {
+                      if (doc === 'roadmap' && !strategy.documents.roadmap) return null
+                      return (
+                        <button
+                          key={doc}
+                          onClick={() => setActiveDoc(doc)}
+                          className={`flex-1 py-3 text-sm font-medium transition ${
+                            activeDoc === doc
+                              ? 'bg-zinc-900 text-white'
+                              : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'
+                          }`}
+                        >
+                          {doc === 'perfil' ? 'Perfil' :
+                           doc === 'funnel' ? 'Funnel' :
+                           doc === 'contenido' ? 'Contenido' :
+                           doc === 'itr' ? 'ITR' : '90 Días'}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <div className="p-6">
+                    <div
+                      className="prose prose-zinc prose-sm max-w-none overflow-auto max-h-[600px] [&_h1]:text-xl [&_h1]:font-bold [&_h1]:text-zinc-900 [&_h1]:mb-4 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-zinc-800 [&_h2]:mt-6 [&_h2]:mb-3 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-zinc-700 [&_h3]:mt-4 [&_h3]:mb-2 [&_li]:text-sm [&_li]:text-zinc-700 [&_p]:text-sm [&_p]:text-zinc-700 [&_p]:leading-relaxed [&_strong]:font-semibold [&_strong]:text-zinc-900 [&_ul]:space-y-1 [&_ol]:space-y-1"
+                      dangerouslySetInnerHTML={{ __html: marked(strategy.documents[activeDoc] ?? '') as string }}
+                    />
+                  </div>
+                </div>
+
+                {/* Approve section */}
+                {!isApproved ? (
+                  <div className="bg-white rounded-2xl border border-zinc-100 p-6 flex items-center justify-between">
+                    <div>
+                      <h4 className="font-semibold text-zinc-900 mb-1">¿La estrategia es correcta?</h4>
+                      <p className="text-sm text-zinc-500">Al aprobar, los archivos se publican en Gitea y el ecosistema se activa para este cliente.</p>
+                    </div>
+                    <div className="flex gap-3 flex-shrink-0 ml-6">
+                      <button
+                        onClick={analyze}
+                        disabled={analyzing || approving}
+                        className="border border-zinc-200 text-zinc-700 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-zinc-50 transition disabled:opacity-50"
+                      >
+                        {analyzing ? 'Regenerando...' : '↺ Regenerar'}
+                      </button>
+                      <button
+                        onClick={approve}
+                        disabled={approving || analyzing}
+                        className="bg-zinc-900 text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-zinc-700 transition disabled:opacity-50"
+                      >
+                        {approving ? 'Publicando...' : '✓ Aprobar y Publicar'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="bg-green-50 border border-green-100 rounded-2xl p-6">
+                      <p className="font-semibold text-green-800 mb-1">✓ Estrategia aprobada y publicada</p>
+                      <p className="text-sm text-green-700">Los archivos están en Gitea. El ecosistema está activo para este cliente.</p>
+                      <p className="text-xs text-green-600 mt-2">Aprobado: {blueprint?.agencyApprovedAt ? new Date(blueprint.agencyApprovedAt).toLocaleString('es-CO') : ''}</p>
+                    </div>
+                    {clientCredentials && (
+                      <ClientCredentialsCard
+                        email={clientCredentials.email}
+                        password={clientCredentials.password}
+                        sessionId={id}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

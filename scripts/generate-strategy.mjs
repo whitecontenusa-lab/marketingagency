@@ -143,6 +143,32 @@ AGENCY CONTEXT (internal):
 - Target audience (agency view): ${s.targetAudience}
 - Agency objective: ${s.agencyContext}
 
+${s.marketIntelligence ? `
+MARKET INTELLIGENCE (pre-analyzed by the ecosystem):
+${s.marketIntelligence.rawSummary}
+
+Positioning opportunity:
+${s.marketIntelligence.positioning}
+
+Competitors analyzed:
+${JSON.stringify(s.marketIntelligence.competitors, null, 2)}
+
+Market trends:
+${JSON.stringify(s.marketIntelligence.trends, null, 2)}
+
+Key keywords: ${Array.isArray(s.marketIntelligence.keywords) ? s.marketIntelligence.keywords.join(', ') : ''}
+
+USE THIS MARKET INTELLIGENCE to make the strategy more specific and grounded in real market reality.
+The simulationNotes should reference these competitors and trends specifically.
+` : ''}
+
+${s.agencyLearnings?.length ? `
+AGENCY LEARNINGS (from similar past clients):
+${s.agencyLearnings.map((l, i) => `${i + 1}. ${l}`).join('\n')}
+
+Use these learnings to inform funnel type selection and archetype assignment.
+` : ''}
+
 Generate the complete strategy. All documents must be in ${lang}.
 The simulation notes should include specific market insights for ${s.industry} in ${s.country}.
 Be specific, actionable, and grounded in their actual answers.

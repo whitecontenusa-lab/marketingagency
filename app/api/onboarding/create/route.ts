@@ -25,6 +25,20 @@ export async function POST(req: NextRequest) {
 
   if (!clientName) return NextResponse.json({ error: 'clientId or clientName is required' }, { status: 400 })
 
+  // Enforce plan seat limit
+  const workspaceId = session.user.workspaceId
+  if (workspaceId) {
+    const workspace = await db.workspace.findUnique({ where: { id: workspaceId } })
+    if (workspace && workspace.planMaxClients < 999) {
+      const currentCount = await db.onboardingSession.count({ where: { workspaceId } })
+      if (currentCount >= workspace.planMaxClients) {
+        return NextResponse.json({
+          error: `Plan ${workspace.plan} permite máximo ${workspace.planMaxClients} clientes. Mejora tu plan para continuar.`,
+        }, { status: 403 })
+      }
+    }
+  }
+
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 
   try {
@@ -43,6 +57,7 @@ export async function POST(req: NextRequest) {
         targetAudience:   body.targetAudience     || '',
         businessStage:    body.businessStage      || '',
         agencyContext:    body.agencyObjective    || body.agencyContext || '',
+        workspaceId:      workspaceId ?? null,
         expiresAt,
         status: 'pending',
       },
