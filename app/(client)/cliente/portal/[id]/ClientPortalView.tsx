@@ -2,13 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { marked } from 'marked'
-
-const FUNNEL_NAMES: Record<number, string> = {
-  1: 'Conciencia y Confianza',
-  2: 'Autoridad y Conversión',
-  3: 'Premium y Relación',
-  4: 'Escala y Automatización',
-}
+import { getText, t, type Lang } from '@/lib/i18n'
 
 type DocKey = 'perfil' | 'funnel' | 'contenido' | 'itr' | 'roadmap'
 
@@ -32,14 +26,18 @@ interface Props {
   brandName: string
   approvedAt: string | null
   strategy: Record<string, unknown> | null
+  language: 'es' | 'en'
 }
 
-export default function ClientPortalView({ sessionId, clientName, brandName, approvedAt, strategy: rawStrategy }: Props) {
+export default function ClientPortalView({ sessionId, clientName, brandName, approvedAt, strategy: rawStrategy, language }: Props) {
   const router = useRouter()
   const [activeDoc, setActiveDoc] = useState<DocKey>('perfil')
   const [loggingOut, setLoggingOut] = useState(false)
 
+  const lang: Lang = language === 'en' ? 'en' : 'es'
   const strategy = rawStrategy as Strategy | null
+
+  const funnelNames = t[lang].portal.funnelNames as Record<string, string>
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -48,6 +46,14 @@ export default function ClientPortalView({ sessionId, clientName, brandName, app
   }
 
   const displayName = brandName || clientName
+
+  const TAB_LABELS: Record<DocKey, string> = {
+    perfil: getText(lang, 'portal.tabPerfil'),
+    funnel: getText(lang, 'portal.tabFunnel'),
+    contenido: getText(lang, 'portal.tabContenido'),
+    itr: getText(lang, 'portal.tabItr'),
+    roadmap: getText(lang, 'portal.tabRoadmap'),
+  }
 
   return (
     <div className="min-h-screen bg-zinc-50">
@@ -62,7 +68,7 @@ export default function ClientPortalView({ sessionId, clientName, brandName, app
         <div className="flex items-center gap-4">
           {approvedAt && (
             <span className="text-xs bg-green-50 text-green-700 font-medium px-3 py-1 rounded-full">
-              Estrategia aprobada
+              {getText(lang, 'portal.strategyReady')}
             </span>
           )}
           <button
@@ -70,7 +76,7 @@ export default function ClientPortalView({ sessionId, clientName, brandName, app
             disabled={loggingOut}
             className="text-sm text-zinc-400 hover:text-zinc-900 transition disabled:opacity-50"
           >
-            {loggingOut ? 'Saliendo...' : 'Cerrar sesión'}
+            {loggingOut ? getText(lang, 'portal.loggingOut') : getText(lang, 'portal.logout')}
           </button>
         </div>
       </nav>
@@ -79,9 +85,9 @@ export default function ClientPortalView({ sessionId, clientName, brandName, app
         {!strategy ? (
           <div className="bg-white rounded-2xl border border-zinc-100 p-10 text-center">
             <div className="w-16 h-16 bg-zinc-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">⏳</div>
-            <h3 className="text-xl font-bold text-zinc-900 mb-2">Estrategia en preparación</h3>
+            <h3 className="text-xl font-bold text-zinc-900 mb-2">{getText(lang, 'portal.strategyPending')}</h3>
             <p className="text-zinc-500 text-sm max-w-md mx-auto">
-              Tu estrategia está siendo revisada por el equipo de Avilion. Te notificaremos cuando esté lista.
+              {getText(lang, 'portal.strategyPendingDesc')}
             </p>
           </div>
         ) : (
@@ -90,9 +96,11 @@ export default function ClientPortalView({ sessionId, clientName, brandName, app
             <div className="bg-zinc-900 text-white rounded-2xl p-6">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-1">Tu estrategia de marca</p>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-1">
+                    {getText(lang, 'portal.tabStrategy')}
+                  </p>
                   <h3 className="text-xl font-bold">
-                    Funnel {strategy.funnelType} — {FUNNEL_NAMES[strategy.funnelType] ?? ''}
+                    {getText(lang, 'portal.funnelLabel')} {strategy.funnelType} — {funnelNames[String(strategy.funnelType)] ?? ''}
                   </h3>
                 </div>
                 <span className="text-xs bg-white/10 px-3 py-1.5 rounded-full font-medium flex-shrink-0 ml-4">
@@ -102,7 +110,8 @@ export default function ClientPortalView({ sessionId, clientName, brandName, app
               <p className="text-zinc-300 text-sm leading-relaxed">{strategy.funnelReason}</p>
               {approvedAt && (
                 <p className="text-xs text-zinc-500 mt-3">
-                  Aprobada el {new Date(approvedAt).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  {getText(lang, 'portal.approvedOn')}{' '}
+                  {new Date(approvedAt).toLocaleDateString(lang === 'en' ? 'en-US' : 'es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}
                 </p>
               )}
             </div>
@@ -122,10 +131,7 @@ export default function ClientPortalView({ sessionId, clientName, brandName, app
                           : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'
                       }`}
                     >
-                      {doc === 'perfil' ? 'Perfil de Marca' :
-                       doc === 'funnel' ? 'Funnel' :
-                       doc === 'contenido' ? 'Contenido' :
-                       doc === 'itr' ? 'ITR' : 'Plan 90 Días'}
+                      {TAB_LABELS[doc]}
                     </button>
                   )
                 })}

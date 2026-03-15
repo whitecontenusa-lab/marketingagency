@@ -37,6 +37,7 @@ export default async function ClientPortalPage({ params }: { params: Promise<{ i
       brandName={session.brandName}
       approvedAt={blueprint?.agencyApprovedAt?.toISOString() ?? null}
       strategy={strategy}
+      language={session.language as 'es' | 'en'}
     />
   )
 }

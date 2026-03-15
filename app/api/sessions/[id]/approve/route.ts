@@ -124,6 +124,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
         brandName: session.brandName,
         password: tempPassword,
         portalUrl,
+        language: session.language === 'en' ? 'en' : 'es',
       }).catch(err => console.error('[mailer] Failed to send credentials email:', err))
     }
   }

@@ -1,6 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { getText, type Lang } from '@/lib/i18n'
 
 export default function ClientLoginPage() {
   const router = useRouter()
@@ -8,6 +9,11 @@ export default function ClientLoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [lang, setLang] = useState<Lang>('es')
+
+  useEffect(() => {
+    if (navigator.language.startsWith('en')) setLang('en')
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -23,10 +29,10 @@ export default function ClientLoginPage() {
       if (res.ok) {
         router.push(`/cliente/portal/${data.sessionId}`)
       } else {
-        setError(data.error ?? 'Credenciales incorrectas')
+        setError(data.error ?? getText(lang, 'login.error'))
       }
     } catch {
-      setError('Error de red, intenta de nuevo')
+      setError(getText(lang, 'login.networkError'))
     } finally {
       setLoading(false)
     }
@@ -36,10 +42,10 @@ export default function ClientLoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-zinc-50">
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-zinc-100 p-8">
         <h1 className="text-2xl font-bold text-zinc-900 mb-1">Avilion</h1>
-        <p className="text-zinc-500 text-sm mb-8">Accede a tu estrategia</p>
+        <p className="text-zinc-500 text-sm mb-8">{getText(lang, 'login.subtitle')}</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-zinc-700 mb-1">{getText(lang, 'login.email')}</label>
             <input
               type="email"
               value={email}
@@ -49,7 +55,7 @@ export default function ClientLoginPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">Contraseña</label>
+            <label className="block text-sm font-medium text-zinc-700 mb-1">{getText(lang, 'login.password')}</label>
             <input
               type="password"
               value={password}
@@ -64,7 +70,7 @@ export default function ClientLoginPage() {
             disabled={loading}
             className="w-full bg-zinc-900 text-white rounded-lg py-2 text-sm font-medium hover:bg-zinc-700 transition disabled:opacity-50"
           >
-            {loading ? 'Entrando...' : 'Entrar'}
+            {loading ? getText(lang, 'login.submitting') : getText(lang, 'login.submit')}
           </button>
         </form>
       </div>
