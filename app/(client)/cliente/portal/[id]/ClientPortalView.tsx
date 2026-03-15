@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { marked } from 'marked'
 import { getText, t, type Lang } from '@/lib/i18n'
 import { DeliveryCountdown } from './DeliveryCountdown'
+import TabContenidoCiclo from '@/components/portal/TabContenidoCiclo'
 
 type DocKey = 'perfil' | 'funnel' | 'contenido' | 'itr' | 'roadmap'
 
@@ -35,6 +36,7 @@ export default function ClientPortalView({ sessionId, clientName, brandName, app
   const router = useRouter()
   const [activeDoc, setActiveDoc] = useState<DocKey>('perfil')
   const [loggingOut, setLoggingOut] = useState(false)
+  const [portalTab, setPortalTab] = useState<'strategy' | 'content'>('strategy')
 
   const lang: Lang = language === 'en' ? 'en' : 'es'
   const strategy = rawStrategy as Strategy | null
@@ -84,7 +86,31 @@ export default function ClientPortalView({ sessionId, clientName, brandName, app
       </nav>
 
       <div className="max-w-4xl mx-auto px-6 py-8">
-        {!strategy && deliveredAt ? (
+        {/* Top-level portal tabs */}
+        <div className="flex gap-1 p-1 bg-zinc-800 rounded-lg mb-6">
+          <button
+            onClick={() => setPortalTab('strategy')}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              portalTab === 'strategy' ? 'bg-zinc-700 text-white' : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            {lang === 'en' ? 'My Strategy' : 'Mi Estrategia'}
+          </button>
+          <button
+            onClick={() => setPortalTab('content')}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              portalTab === 'content' ? 'bg-zinc-700 text-white' : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            {lang === 'en' ? 'Monthly Content' : 'Contenido del Mes'}
+          </button>
+        </div>
+
+        {portalTab === 'content' && (
+          <TabContenidoCiclo sessionId={sessionId} lang={lang} />
+        )}
+
+        {portalTab === 'strategy' && (!strategy && deliveredAt ? (
           <div className="bg-zinc-900 rounded-2xl border border-zinc-800">
             <DeliveryCountdown deliveredAt={deliveredAt} lang={lang} />
           </div>
@@ -150,7 +176,7 @@ export default function ClientPortalView({ sessionId, clientName, brandName, app
               </div>
             </div>
           </div>
-        )}
+        ))}
       </div>
     </div>
   )

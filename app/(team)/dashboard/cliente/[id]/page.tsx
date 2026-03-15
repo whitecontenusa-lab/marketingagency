@@ -7,6 +7,7 @@ import TabChecklist from './TabChecklist'
 import TabPropuestaFactura from './TabPropuestaFactura'
 import TabCampanas from './TabCampanas'
 import TabInteligencia from './TabInteligencia'
+import TabCicloContenido from './TabCicloContenido'
 
 interface Strategy {
   lang: string
@@ -44,7 +45,7 @@ export default function ClientePage() {
   const [session, setSession] = useState<Record<string, unknown> | null>(null)
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null)
   const [strategy, setStrategy] = useState<Strategy | null>(null)
-  const [activeTab, setActiveTab] = useState<'estrategia' | 'checklist' | 'propuesta' | 'campanas' | 'inteligencia'>('estrategia')
+  const [activeTab, setActiveTab] = useState<'estrategia' | 'checklist' | 'propuesta' | 'campanas' | 'inteligencia' | 'ciclo'>('estrategia')
   const [activeDoc, setActiveDoc] = useState<'perfil' | 'funnel' | 'contenido' | 'itr' | 'roadmap'>('perfil')
   const [analyzing, setAnalyzing] = useState(false)
   const [generating, setGenerating] = useState(false) // runner is working
@@ -195,6 +196,7 @@ export default function ClientePage() {
             { key: 'propuesta', label: 'Propuesta & Factura' },
             { key: 'campanas', label: 'Campañas' },
             { key: 'inteligencia', label: 'Inteligencia' },
+            { key: 'ciclo', label: 'Ciclo de Contenido' },
           ] as const).map(tab => (
             <button
               key={tab.key}
@@ -225,6 +227,9 @@ export default function ClientePage() {
 
         {/* INTELIGENCIA TAB */}
         {activeTab === 'inteligencia' && <TabInteligencia sessionId={id} />}
+
+        {/* CICLO DE CONTENIDO TAB */}
+        {activeTab === 'ciclo' && <TabCicloContenido sessionId={id} />}
 
         {/* ESTRATEGIA TAB */}
         {activeTab === 'estrategia' && (

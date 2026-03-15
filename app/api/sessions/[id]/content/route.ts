@@ -5,8 +5,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params
   const { searchParams } = new URL(req.url)
   const campaignId = searchParams.get('campaignId')
+  const cycleId = searchParams.get('cycleId')
   const pieces = await db.contentPiece.findMany({
-    where: { sessionId: id, ...(campaignId ? { campaignId } : {}) },
+    where: {
+      sessionId: id,
+      ...(campaignId ? { campaignId } : {}),
+      ...(cycleId ? { cycleId } : {}),
+    },
     orderBy: [{ scheduledAt: 'asc' }, { createdAt: 'desc' }],
   })
   return NextResponse.json(pieces)
