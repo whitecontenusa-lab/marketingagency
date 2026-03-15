@@ -9,6 +9,7 @@ const ALLOWED_FIELDS = new Set([
   'icpPain', 'icpDesire', 'agencyContext', 'businessType', 'revenueModel',
   'specificProduct', 'targetAudience', 'expertise', 'personalStory',
   'credentialHighlights', 'contentPillars',
+  'hasBranding', 'brandColors', 'brandFonts', 'brandLogoUrl',
 ])
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {

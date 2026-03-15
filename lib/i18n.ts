@@ -1,9 +1,9 @@
 export type Lang = 'es' | 'en'
 
-// Step names shown in progress bar — order: Contacto → Tu tipo → Alma → Audiencia → Negocio → Visión
+// Step names shown in progress bar — order: Contacto → Tu tipo → Alma → Audiencia → Negocio → Visión → Tu marca
 export const STEP_NAMES = {
-  es: ['Contacto', 'Tu tipo', 'Tu alma', 'Tu audiencia', 'Tu negocio', 'Tu visión'],
-  en: ['Contact', 'Your type', 'Your soul', 'Your audience', 'Your business', 'Your vision'],
+  es: ['Contacto', 'Tu tipo', 'Tu alma', 'Tu audiencia', 'Tu negocio', 'Tu visión', 'Tu marca'],
+  en: ['Contact', 'Your type', 'Your soul', 'Your audience', 'Your business', 'Your vision', 'Your brand'],
 } as const
 
 export const t = {
@@ -88,6 +88,16 @@ export const t = {
     step7Subtitle: 'El lugar al que vas define cada decisión que tomas hoy.',
     vision: 'Si todo sale bien en los próximos 3 años, ¿cómo se ve tu vida y tu marca?',
     visionHint: 'Sé ambicioso. Sé específico. ¿Cuántas personas alcanzas? ¿Cómo te reconocen? ¿Qué impacto dejaste?',
+
+    // Step 8 — Branding assessment
+    step8Title: '¿Tienes identidad de marca?',
+    step8Subtitle: 'Esto nos ayuda a saber desde dónde partimos',
+    hasBrandingYes: 'Sí, tengo logo y colores',
+    hasBrandingNo: 'No, estoy construyendo',
+    brandingBriefNote: 'Nuestro equipo generará un brief visual para ti',
+    brandLogoUrl: 'URL de tu logo (opcional)',
+    brandColors: 'Colores de marca',
+    brandFonts: 'Tipografías',
 
     thankYouTitle: '¡Recibido, [nombre]!',
     thankYouSubtitle: 'Nuestro equipo va a analizar todo lo que compartiste y construir tu estrategia personalizada.\nTe contactamos en las próximas 24 horas.',
@@ -249,6 +259,16 @@ export const t = {
     step7Subtitle: 'Where you\'re going defines every decision you make today.',
     vision: 'If everything goes well in the next 3 years, what does your life and brand look like?',
     visionHint: 'Be ambitious. Be specific. How many people do you reach? How are you known? What impact did you leave?',
+
+    // Step 8 — Branding assessment
+    step8Title: 'Do you have a brand identity?',
+    step8Subtitle: 'This helps us know where you are starting from',
+    hasBrandingYes: 'Yes, I have a logo & colors',
+    hasBrandingNo: "No, I'm building it",
+    brandingBriefNote: 'Our team will generate a visual brief for you',
+    brandLogoUrl: 'Your logo URL (optional)',
+    brandColors: 'Brand colors',
+    brandFonts: 'Fonts',
 
     thankYouTitle: 'Received, [name]!',
     thankYouSubtitle: "Our team will analyze everything you shared and build your personalized strategy.\nWe'll reach out within 24 hours.",

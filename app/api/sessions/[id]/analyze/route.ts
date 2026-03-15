@@ -96,6 +96,69 @@ async function enrichWithIntelligence(
   return { marketIntelligence, agencyLearnings: learnings.map(l => l.insight) }
 }
 
+async function generateBrandBrief(sessionId: string, session: { clientName: string; brandName: string; industry: string; purpose: string; values: string; language: string }) {
+  const brandName = session.brandName || session.clientName
+  const lang = session.language === 'en' ? 'en' : 'es'
+  const prompt = lang === 'en'
+    ? `You are a brand identity expert. Based on this brand, create a concise visual identity brief.
+Brand: ${brandName}
+Industry: ${session.industry}
+Purpose: ${session.purpose}
+Values: ${session.values}
+
+Output ONLY a JSON object with these keys:
+{
+  "colorPalette": "3-4 recommended colors with hex codes and emotion they convey",
+  "typography": "2 font recommendations (heading + body) and why",
+  "brandVoice": "3-5 adjectives describing the brand voice",
+  "visualStyle": "2-3 sentences describing the visual aesthetic",
+  "logoDirection": "Brief creative direction for logo design"
+}`
+    : `Eres un experto en identidad visual de marca. Basándote en esta marca, crea un brief visual conciso.
+Marca: ${brandName}
+Industria: ${session.industry}
+Propósito: ${session.purpose}
+Valores: ${session.values}
+
+Responde SOLO un objeto JSON con estas claves:
+{
+  "colorPalette": "3-4 colores recomendados con códigos hex y emoción que transmiten",
+  "typography": "2 fuentes recomendadas (titular + cuerpo) y por qué",
+  "brandVoice": "3-5 adjetivos que describen la voz de la marca",
+  "visualStyle": "2-3 oraciones describiendo la estética visual",
+  "logoDirection": "Dirección creativa breve para el diseño del logo"
+}`
+
+  const raw = await runClaudeSubprocess(prompt, 60_000)
+  const match = raw.match(/\{[\s\S]*\}/)
+  if (!match) throw new Error('No JSON in brand brief response')
+
+  const brief = JSON.parse(match[0])
+  const briefText = JSON.stringify(brief, null, 2)
+
+  // Save as checklist item with brief in notes
+  const existing = await db.checklistItem.findFirst({
+    where: { sessionId, key: 'brand_brief' }
+  })
+  if (!existing) {
+    await db.checklistItem.create({
+      data: {
+        sessionId,
+        key: 'brand_brief',
+        label: lang === 'en' ? 'AI Brand Brief (no existing identity)' : 'Brief de marca IA (sin identidad previa)',
+        completed: false,
+        notes: briefText,
+      }
+    })
+  }
+
+  // Mark as generated
+  await db.onboardingSession.update({
+    where: { id: sessionId },
+    data: { brandBriefGenerated: true },
+  })
+}
+
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const teamSession = await getSession()
   if (!teamSession) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -157,6 +220,13 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
         session.industry,
         session,
       )
+
+      // B — Brand brief for clients without branding
+      if (!session.hasBranding && !session.brandBriefGenerated) {
+        generateBrandBrief(id, session).catch(err =>
+          console.warn('[analyze] Brand brief generation failed:', err)
+        )
+      }
 
       const enrichedData = {
         ...interviewData,

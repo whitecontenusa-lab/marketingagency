@@ -12,9 +12,10 @@ import { StepPersonalBrand } from '@/components/onboarding/StepPersonalBrand'
 import { StepSoul } from '@/components/onboarding/StepSoul'
 import { StepAudience } from '@/components/onboarding/StepAudience'
 import { StepVision } from '@/components/onboarding/StepVision'
+import { StepBranding } from '@/components/onboarding/StepBranding'
 import type { StepProps } from '@/components/onboarding/types'
 
-const TOTAL_STEPS = 7
+const TOTAL_STEPS = 8
 
 function renderBusinessStep(props: StepProps, session: Record<string, string | number | null>) {
   const bt = String(session.businessType ?? '')
@@ -100,6 +101,7 @@ export default function StepPage() {
         {stepNum === 5 && <StepAudience {...props} />}
         {stepNum === 6 && renderBusinessStep(props, session)}
         {stepNum === 7 && <StepVision {...props} />}
+        {stepNum === 8 && <StepBranding {...props} />}
       </div>
     </div>
   )
