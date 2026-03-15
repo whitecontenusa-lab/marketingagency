@@ -8,7 +8,8 @@ export function DeliveryCountdown({ deliveredAt, lang }: { deliveredAt: string; 
     function update() {
       const diff = new Date(deliveredAt).getTime() - Date.now()
       if (diff <= 0) {
-        setRemaining(lang === 'en' ? 'Ready! Refresh the page.' : 'Lista. Recarga la página.')
+        setRemaining(lang === 'en' ? 'Ready! Loading your strategy...' : 'Lista. Cargando tu estrategia...')
+        setTimeout(() => window.location.reload(), 3000)
         return
       }
       const h = Math.floor(diff / 3_600_000)
@@ -16,7 +17,7 @@ export function DeliveryCountdown({ deliveredAt, lang }: { deliveredAt: string; 
       setRemaining(lang === 'en' ? `${h}h ${m}min` : `${h}h ${m}min`)
     }
     update()
-    const id = setInterval(update, 60_000)
+    const id = setInterval(update, 30_000)
     return () => clearInterval(id)
   }, [deliveredAt, lang])
 

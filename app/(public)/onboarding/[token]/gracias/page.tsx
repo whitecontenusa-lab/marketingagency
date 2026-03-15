@@ -31,30 +31,75 @@ export default async function GraciasPage({ params }: { params: Promise<{ token:
         </p>
       </div>
 
-      {/* Next steps */}
+      {/* Feature preview section */}
       <div className="flex-1 px-6 py-10 max-w-md mx-auto w-full">
-        <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-5">
-          {lang === 'es' ? 'Próximos pasos' : 'What happens next'}
+        {/* Email note */}
+        <div className="flex items-start gap-3 mb-2">
+          <span className="text-zinc-400 text-lg leading-none mt-0.5">📧</span>
+          <p className="text-sm text-zinc-500">
+            {lang === 'es'
+              ? 'Recibirás tus credenciales de acceso por email en las próximas horas.'
+              : "You'll receive your portal access credentials by email within the next few hours."}
+          </p>
+        </div>
+
+        {/* Section heading */}
+        <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-4 mt-8">
+          {lang === 'es' ? 'Lo que recibirás' : "What you'll receive"}
         </p>
-        <div className="space-y-4">
-          {[
-            lang === 'es'
-              ? 'Nuestro equipo revisará tu información a detalle.'
-              : 'Our team will carefully review your information.',
-            lang === 'es'
-              ? 'Te contactaremos dentro de las próximas 24 horas.'
-              : "We'll reach out within the next 24 hours.",
-            lang === 'es'
-              ? 'Prepararemos una estrategia personalizada para tu marca.'
-              : "We'll prepare a personalized strategy for your brand.",
-          ].map((step, i) => (
-            <div key={i} className="flex items-start gap-4 bg-white rounded-2xl p-4 border border-zinc-100">
-              <div className="w-7 h-7 rounded-full bg-zinc-900 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                {i + 1}
-              </div>
-              <p className="text-sm text-zinc-700 leading-relaxed">{step}</p>
+
+        {/* Feature cards */}
+        <div className="space-y-3">
+          {/* Card 1 — Personalized strategy */}
+          <div className="bg-white rounded-2xl border border-zinc-100 p-5 flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-lg">✦</span>
             </div>
-          ))}
+            <div>
+              <p className="font-semibold text-sm text-zinc-900 mb-1">
+                {lang === 'es' ? 'Estrategia personalizada' : 'Personalized strategy'}
+              </p>
+              <p className="text-xs text-zinc-500 leading-relaxed">
+                {lang === 'es'
+                  ? 'Un blueprint completo con tu funnel, perfil de marca, estrategia de contenido y hoja de ruta.'
+                  : 'A complete blueprint with your funnel, brand profile, content strategy, and roadmap.'}
+              </p>
+            </div>
+          </div>
+
+          {/* Card 2 — Content pieces */}
+          <div className="bg-white rounded-2xl border border-zinc-100 p-5 flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl bg-zinc-100 flex items-center justify-center flex-shrink-0">
+              <span className="text-lg">📅</span>
+            </div>
+            <div>
+              <p className="font-semibold text-sm text-zinc-900 mb-1">
+                {lang === 'es' ? '30 piezas de contenido / mes' : '30 content pieces / month'}
+              </p>
+              <p className="text-xs text-zinc-500 leading-relaxed">
+                {lang === 'es'
+                  ? 'Cada mes, 30 piezas listas para publicar adaptadas a tus plataformas y voz de marca.'
+                  : 'Every month, 30 publish-ready pieces tailored to your platforms and brand voice.'}
+              </p>
+            </div>
+          </div>
+
+          {/* Card 3 — Monthly report */}
+          <div className="bg-white rounded-2xl border border-zinc-100 p-5 flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl bg-zinc-100 flex items-center justify-center flex-shrink-0">
+              <span className="text-lg">📊</span>
+            </div>
+            <div>
+              <p className="font-semibold text-sm text-zinc-900 mb-1">
+                {lang === 'es' ? 'Reporte mensual de progreso' : 'Monthly progress report'}
+              </p>
+              <p className="text-xs text-zinc-500 leading-relaxed">
+                {lang === 'es'
+                  ? 'Un reporte con tus logros del mes y una vista previa de lo que viene.'
+                  : 'A report with your monthly achievements and a preview of what\'s coming.'}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Extra note from i18n */}

@@ -5,6 +5,7 @@ import { marked } from 'marked'
 import { getText, t, type Lang } from '@/lib/i18n'
 import { DeliveryCountdown } from './DeliveryCountdown'
 import TabContenidoCiclo from '@/components/portal/TabContenidoCiclo'
+import TabMisReportes from '@/components/portal/TabMisReportes'
 
 type DocKey = 'perfil' | 'funnel' | 'contenido' | 'itr' | 'roadmap'
 
@@ -36,7 +37,7 @@ export default function ClientPortalView({ sessionId, clientName, brandName, app
   const router = useRouter()
   const [activeDoc, setActiveDoc] = useState<DocKey>('perfil')
   const [loggingOut, setLoggingOut] = useState(false)
-  const [portalTab, setPortalTab] = useState<'strategy' | 'content'>('strategy')
+  const [portalTab, setPortalTab] = useState<'strategy' | 'content' | 'reports'>('strategy')
 
   const lang: Lang = language === 'en' ? 'en' : 'es'
   const strategy = rawStrategy as Strategy | null
@@ -104,10 +105,22 @@ export default function ClientPortalView({ sessionId, clientName, brandName, app
           >
             {lang === 'en' ? 'Monthly Content' : 'Contenido del Mes'}
           </button>
+          <button
+            onClick={() => setPortalTab('reports')}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              portalTab === 'reports' ? 'bg-zinc-700 text-white' : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            {lang === 'en' ? 'My Reports' : 'Mis Reportes'}
+          </button>
         </div>
 
         {portalTab === 'content' && (
           <TabContenidoCiclo sessionId={sessionId} lang={lang} />
+        )}
+
+        {portalTab === 'reports' && (
+          <TabMisReportes sessionId={sessionId} lang={lang} />
         )}
 
         {portalTab === 'strategy' && (!strategy && deliveredAt ? (
@@ -169,6 +182,25 @@ export default function ClientPortalView({ sessionId, clientName, brandName, app
                 })}
               </div>
               <div className="p-6">
+                <div className="flex justify-end mb-3">
+                  <button
+                    onClick={() => {
+                      const content = strategy.documents?.[activeDoc] ?? ''
+                      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = `${activeDoc}-${(brandName || clientName).replace(/\s+/g, '-').toLowerCase()}.txt`
+                      document.body.appendChild(a)
+                      a.click()
+                      document.body.removeChild(a)
+                      URL.revokeObjectURL(url)
+                    }}
+                    className="text-xs border border-zinc-200 text-zinc-500 hover:bg-zinc-50 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5"
+                  >
+                    ↓ {lang === 'es' ? 'Descargar' : 'Download'}
+                  </button>
+                </div>
                 <div
                   className="prose prose-zinc prose-sm max-w-none overflow-auto max-h-[600px] [&_h1]:text-xl [&_h1]:font-bold [&_h1]:text-zinc-900 [&_h1]:mb-4 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-zinc-800 [&_h2]:mt-6 [&_h2]:mb-3 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-zinc-700 [&_h3]:mt-4 [&_h3]:mb-2 [&_li]:text-sm [&_li]:text-zinc-700 [&_p]:text-sm [&_p]:text-zinc-700 [&_p]:leading-relaxed [&_strong]:font-semibold [&_strong]:text-zinc-900 [&_ul]:space-y-1 [&_ol]:space-y-1"
                   dangerouslySetInnerHTML={{ __html: marked(strategy.documents?.[activeDoc] ?? '') as string }}

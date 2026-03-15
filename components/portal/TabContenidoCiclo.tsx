@@ -74,12 +74,26 @@ const strings = {
 
 function PieceCard({ piece, lang }: { piece: ContentPiece; lang: 'es' | 'en' }) {
   const [expanded, setExpanded] = useState(false)
+  const [copied, setCopied] = useState(false)
   const s = strings[lang]
   const now = new Date()
   const releasedAt = piece.releasedAt ? new Date(piece.releasedAt) : null
   const isLocked = releasedAt !== null && releasedAt > now
 
   const platformColor = PLATFORM_COLORS[piece.platform] ?? 'bg-zinc-100 text-zinc-700'
+
+  async function copyPiece() {
+    const parts = [piece.hook, '', piece.body]
+    if (piece.cta) parts.push('', piece.cta)
+    if (piece.hashtags) parts.push('', piece.hashtags)
+    try {
+      await navigator.clipboard.writeText(parts.join('\n'))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // clipboard not available (http or permissions)
+    }
+  }
 
   return (
     <div className="bg-white rounded-xl border border-zinc-100 p-4">
@@ -90,6 +104,18 @@ function PieceCard({ piece, lang }: { piece: ContentPiece; lang: 'es' | 'en' }) 
         <span className="text-xs text-zinc-400 bg-zinc-50 px-2 py-0.5 rounded-full">
           {piece.format}
         </span>
+        {!isLocked && (
+          <button
+            onClick={copyPiece}
+            className="ml-auto text-xs text-zinc-400 hover:text-zinc-700 transition flex items-center gap-1"
+            title={lang === 'es' ? 'Copiar pieza' : 'Copy piece'}
+          >
+            {copied
+              ? <span className="text-green-600 font-medium">{lang === 'es' ? '✓ Copiado' : '✓ Copied'}</span>
+              : <span>{lang === 'es' ? 'Copiar' : 'Copy'}</span>
+            }
+          </button>
+        )}
       </div>
 
       {isLocked ? (
@@ -146,8 +172,47 @@ function PieceGrid({ cycleId, sessionId, lang }: { cycleId: string; sessionId: s
   const platforms = ['all', ...Array.from(new Set(pieces.map(p => p.platform)))]
   const filtered = activePlatform === 'all' ? pieces : pieces.filter(p => p.platform === activePlatform)
 
+  function downloadAll() {
+    const available = pieces.filter(p => {
+      const rel = p.releasedAt ? new Date(p.releasedAt) : null
+      return !rel || rel <= new Date()
+    })
+    const text = available.map((p, i) => {
+      const lines = [
+        `=== ${lang === 'es' ? 'Pieza' : 'Piece'} ${i + 1} — ${p.platform.toUpperCase()} (${p.format}) ===`,
+        '',
+        p.hook,
+        '',
+        p.body,
+      ]
+      if (p.cta) lines.push('', `➜ ${p.cta}`)
+      if (p.hashtags) lines.push('', p.hashtags)
+      return lines.join('\n')
+    }).join('\n\n---\n\n')
+
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = lang === 'es' ? `contenido-ciclo.txt` : `content-cycle.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div>
+      {pieces.length > 0 && (
+        <div className="flex justify-end mb-3">
+          <button
+            onClick={downloadAll}
+            className="text-xs border border-zinc-200 text-zinc-600 hover:bg-zinc-50 px-4 py-2 rounded-lg transition flex items-center gap-1.5 font-medium"
+          >
+            ↓ {lang === 'es' ? 'Descargar todo (.txt)' : 'Download all (.txt)'}
+          </button>
+        </div>
+      )}
       {/* Platform filter tabs */}
       <div className="flex gap-1 flex-wrap mb-4">
         {platforms.map(pl => (
