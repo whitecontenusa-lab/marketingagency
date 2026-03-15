@@ -189,6 +189,194 @@ export async function sendClientCredentials({
   })
 }
 
+export async function sendMonthlyReport({
+  to,
+  clientName,
+  brandName,
+  reportContent,
+  month,
+  year,
+  portalUrl,
+  language = 'es',
+}: {
+  to: string
+  clientName: string
+  brandName: string
+  reportContent: {
+    headline: string
+    summary: string
+    achievements?: string[]
+    nextMonthPreview?: string
+    sections: { title: string; content: string }[]
+  }
+  month: number
+  year: number
+  portalUrl: string
+  language?: 'es' | 'en'
+}) {
+  const monthName = new Date(year, month - 1).toLocaleString(
+    language === 'en' ? 'en-US' : 'es-CO',
+    { month: 'long' },
+  )
+
+  const subject = language === 'en'
+    ? `Your monthly brand report — ${monthName} ${year}`
+    : `Tu reporte mensual de marca — ${monthName} ${year}`
+
+  const achievementsHtml = reportContent.achievements && reportContent.achievements.length > 0
+    ? `
+<p style="margin:0 0 8px;color:#71717a;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">
+  ${language === 'en' ? 'Achievements' : 'Logros'}
+</p>
+<ul style="margin:0 0 24px;padding-left:0;list-style:none;">
+  ${reportContent.achievements.map(a => `
+  <li style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;">
+    <span style="color:#16a34a;font-size:14px;flex-shrink:0;margin-top:1px;">&#10003;</span>
+    <span style="color:#3f3f46;font-size:14px;line-height:1.5;">${a}</span>
+  </li>`).join('')}
+</ul>`
+    : ''
+
+  const nextMonthHtml = reportContent.nextMonthPreview
+    ? `
+<div style="background:#f4f4f5;border-radius:10px;padding:20px 24px;margin-bottom:24px;">
+  <p style="margin:0 0 8px;color:#71717a;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">
+    ${language === 'en' ? 'What\'s Coming' : 'Lo Que Viene'}
+  </p>
+  <p style="margin:0;color:#3f3f46;font-size:14px;line-height:1.6;">${reportContent.nextMonthPreview}</p>
+</div>`
+    : ''
+
+  const sectionsHtml = reportContent.sections.map(s => `
+<h3 style="margin:0 0 8px;color:#18181b;font-size:15px;font-weight:600;">${s.title}</h3>
+<p style="margin:0 0 20px;color:#52525b;font-size:14px;line-height:1.6;">${s.content}</p>`).join('')
+
+  const html = language === 'en'
+    ? `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="100%" style="max-width:560px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e4e4e7;">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:#18181b;padding:32px 40px;">
+            <p style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">Avilion</p>
+            <p style="margin:6px 0 0;color:#a1a1aa;font-size:13px;">Monthly Brand Report — ${monthName} ${year}</p>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:36px 40px;">
+            <p style="margin:0 0 4px;color:#71717a;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Hi, ${clientName}</p>
+            <p style="margin:0 0 20px;color:#18181b;font-size:22px;font-weight:700;line-height:1.3;">${reportContent.headline}</p>
+            <p style="margin:0 0 28px;color:#52525b;font-size:14px;line-height:1.6;">${reportContent.summary}</p>
+
+            ${achievementsHtml}
+            ${nextMonthHtml}
+
+            <hr style="border:none;border-top:1px solid #f4f4f5;margin:0 0 24px;">
+
+            ${sectionsHtml}
+
+            <!-- CTA -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;">
+              <tr><td align="center">
+                <a href="${portalUrl}" style="display:inline-block;background:#18181b;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:13px 32px;border-radius:10px;">
+                  View my full strategy →
+                </a>
+              </td></tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="border-top:1px solid #f4f4f5;padding:20px 40px;">
+            <p style="margin:0;color:#a1a1aa;font-size:11px;">
+              Monthly report for <strong>${brandName}</strong> — ${monthName} ${year}<br>
+              © Avilion — <a href="https://avilion.io" style="color:#a1a1aa;">avilion.io</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+    `.trim()
+    : `
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="100%" style="max-width:560px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e4e4e7;">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:#18181b;padding:32px 40px;">
+            <p style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">Avilion</p>
+            <p style="margin:6px 0 0;color:#a1a1aa;font-size:13px;">Reporte Mensual de Marca — ${monthName} ${year}</p>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:36px 40px;">
+            <p style="margin:0 0 4px;color:#71717a;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Hola, ${clientName}</p>
+            <p style="margin:0 0 20px;color:#18181b;font-size:22px;font-weight:700;line-height:1.3;">${reportContent.headline}</p>
+            <p style="margin:0 0 28px;color:#52525b;font-size:14px;line-height:1.6;">${reportContent.summary}</p>
+
+            ${achievementsHtml}
+            ${nextMonthHtml}
+
+            <hr style="border:none;border-top:1px solid #f4f4f5;margin:0 0 24px;">
+
+            ${sectionsHtml}
+
+            <!-- CTA -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;">
+              <tr><td align="center">
+                <a href="${portalUrl}" style="display:inline-block;background:#18181b;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:13px 32px;border-radius:10px;">
+                  Ver mi estrategia completa →
+                </a>
+              </td></tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="border-top:1px solid #f4f4f5;padding:20px 40px;">
+            <p style="margin:0;color:#a1a1aa;font-size:11px;">
+              Reporte mensual para <strong>${brandName}</strong> — ${monthName} ${year}<br>
+              © Avilion — <a href="https://avilion.io" style="color:#a1a1aa;">avilion.io</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+    `.trim()
+
+  await transporter.sendMail({
+    from: `"Avilion" <${process.env.SMTP_USER}>`,
+    to,
+    subject,
+    html,
+  })
+}
+
 export async function sendContentCycleEmail({
   to,
   clientName,
