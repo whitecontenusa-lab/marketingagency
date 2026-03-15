@@ -21,7 +21,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   })
 
   if (!cycle) return NextResponse.json({ error: 'Cycle not found' }, { status: 404 })
+  if (cycle.sessionId !== id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   if (!cycle.billingOk) return NextResponse.json({ error: 'Cycle not approved' }, { status: 400 })
+  if (cycle.status === 'generating') return NextResponse.json({ error: 'Already generating' }, { status: 409 })
 
   const session = cycle.session
   const blueprint = session.blueprints[0]
@@ -98,7 +100,7 @@ Responde SOLO el array JSON.`
     if (!match) throw new Error('No JSON array in response')
     pieces = JSON.parse(match[0])
   } catch (err) {
-    await db.contentCycle.update({ where: { id: cycleId }, data: { status: 'approved' } })
+    await db.contentCycle.update({ where: { id: cycleId }, data: { status: 'error' } })
     console.error('[content-cycle/generate] Claude failed:', err)
     return NextResponse.json({ error: 'Generation failed' }, { status: 500 })
   }

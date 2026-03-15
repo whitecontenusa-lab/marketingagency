@@ -30,13 +30,23 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     data: { sessionId: id, cycleNumber, status: 'payment_pending', deliveryDate },
   })
 
-  // Create approval queue item for team
+  // Language-aware approval queue item
+  const onboarding = await db.onboardingSession.findUnique({
+    where: { id },
+    select: { language: true },
+  })
+  const lang = onboarding?.language === 'en' ? 'en' : 'es'
+
   await db.approvalItem.create({
     data: {
       sessionId: id,
       type: 'content_cycle_request',
-      title: `Ciclo de contenido #${cycleNumber} solicitado`,
-      description: 'El cliente solicitó su ciclo mensual. Verificar pago y aprobar.',
+      title: lang === 'en'
+        ? `Content cycle #${cycleNumber} requested`
+        : `Ciclo de contenido #${cycleNumber} solicitado`,
+      description: lang === 'en'
+        ? 'Client requested their monthly content cycle. Verify payment and approve.'
+        : 'El cliente solicitó su ciclo mensual. Verificar pago y aprobar.',
       priority: 'normal',
     },
   })

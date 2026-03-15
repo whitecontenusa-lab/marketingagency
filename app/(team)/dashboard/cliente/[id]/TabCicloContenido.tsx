@@ -31,6 +31,7 @@ const STATUS_STYLES: Record<string, string> = {
   approved: 'bg-blue-50 text-blue-700',
   generating: 'bg-purple-50 text-purple-700',
   delivered: 'bg-green-50 text-green-700',
+  error: 'bg-red-50 text-red-700',
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -39,6 +40,7 @@ const STATUS_LABELS: Record<string, string> = {
   approved: 'Aprobado',
   generating: 'Generando...',
   delivered: 'Entregado',
+  error: 'Error — reintenta',
 }
 
 export default function TabCicloContenido({ sessionId }: { sessionId: string }) {
@@ -197,7 +199,7 @@ export default function TabCicloContenido({ sessionId }: { sessionId: string }) 
                 </button>
               )}
 
-              {cycle.status === 'approved' && (
+              {(cycle.status === 'approved' || cycle.status === 'error') && (
                 <button
                   onClick={() => generateCycle(cycle.id)}
                   disabled={generating === cycle.id}
@@ -208,7 +210,7 @@ export default function TabCicloContenido({ sessionId }: { sessionId: string }) 
                       <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       Generando...
                     </>
-                  ) : '✨ Generar 30 piezas'}
+                  ) : cycle.status === 'error' ? '↺ Reintentar generación' : '✨ Generar 30 piezas'}
                 </button>
               )}
 

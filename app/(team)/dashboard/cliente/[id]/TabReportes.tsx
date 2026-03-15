@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 interface ReportSection {
   title: string
@@ -68,18 +68,18 @@ export function TabReportes({ sessionId }: { sessionId: string }) {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
 
-  async function fetchReports() {
+  const fetchReports = useCallback(async () => {
     try {
       const res = await fetch(`/api/reports/${sessionId}`)
       if (res.ok) setReports(await res.json())
     } catch {
       // silent
     }
-  }
+  }, [sessionId])
 
   useEffect(() => {
     fetchReports()
-  }, [sessionId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchReports])
 
   const internalReport = reports.find(
     r => r.type === 'internal' && r.month === month && r.year === year,

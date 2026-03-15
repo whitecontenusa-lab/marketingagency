@@ -6,7 +6,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const teamSession = await getSession()
   if (!teamSession) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { id } = await params
-  const { cycleId } = await req.json()
+
+  let cycleId: string
+  try {
+    const body = await req.json()
+    cycleId = body.cycleId
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+  }
+  if (!cycleId) return NextResponse.json({ error: 'cycleId is required' }, { status: 400 })
 
   const cycle = await db.contentCycle.update({
     where: { id: cycleId },

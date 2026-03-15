@@ -52,9 +52,15 @@ export async function POST(
     return NextResponse.json({ error: 'Session not found' }, { status: 404 })
   }
 
-  const reportContent = JSON.parse(report.content)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let reportContent: any
+  try {
+    reportContent = JSON.parse(report.content)
+  } catch {
+    return NextResponse.json({ error: 'Report content is corrupted' }, { status: 500 })
+  }
   const lang = (onboarding.language === 'en' ? 'en' : 'es') as 'en' | 'es'
-  const portalUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://avilion.io'
+  const portalUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://avilion.io'
 
   await sendMonthlyReport({
     to: clientUser.email,

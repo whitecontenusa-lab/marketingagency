@@ -198,11 +198,9 @@ Responde SOLO un objeto JSON:
 }`
 
   try {
-    // Run both Claude subprocesses sequentially (120s each)
-    const [internalRaw, clientRaw] = await Promise.all([
-      runClaudeSubprocess(internalPrompt, 120_000),
-      runClaudeSubprocess(clientPrompt, 120_000),
-    ])
+    // Run both Claude subprocesses sequentially to avoid resource contention
+    const internalRaw = await runClaudeSubprocess(internalPrompt, 120_000)
+    const clientRaw   = await runClaudeSubprocess(clientPrompt, 120_000)
 
     const internalContent = extractJson(internalRaw)
     const clientContent = extractJson(clientRaw)
