@@ -15,8 +15,8 @@ export function StepVision({ lang, session, saving, onNext, onBack, step, total 
   return (
     <div>
       <ProgressBar step={step} total={total} lang={lang} />
-      <h1 className="text-2xl font-bold text-zinc-900 mb-4">{getText(lang, 'step6Title')}</h1>
-      <p className="text-sm text-zinc-500 mb-6">{getText(lang, 'step6Subtitle')}</p>
+      <h1 className="text-2xl font-bold text-zinc-900 mb-4">{getText(lang, 'step7Title')}</h1>
+      <p className="text-sm text-zinc-500 mb-6">{getText(lang, 'step7Subtitle')}</p>
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
           <label className="block text-sm font-medium text-zinc-700 mb-1">{getText(lang, 'vision')}</label>

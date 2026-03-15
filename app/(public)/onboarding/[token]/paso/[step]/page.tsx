@@ -4,12 +4,25 @@ import { useParams, useRouter } from 'next/navigation'
 import type { Lang } from '@/lib/i18n'
 import { StepWelcome } from '@/components/onboarding/StepWelcome'
 import { StepBasics } from '@/components/onboarding/StepBasics'
+import { StepBusinessType } from '@/components/onboarding/StepBusinessType'
 import { StepBusiness } from '@/components/onboarding/StepBusiness'
+import { StepService } from '@/components/onboarding/StepService'
+import { StepDigitalProduct } from '@/components/onboarding/StepDigitalProduct'
+import { StepPersonalBrand } from '@/components/onboarding/StepPersonalBrand'
 import { StepSoul } from '@/components/onboarding/StepSoul'
 import { StepAudience } from '@/components/onboarding/StepAudience'
 import { StepVision } from '@/components/onboarding/StepVision'
+import type { StepProps } from '@/components/onboarding/types'
 
-const TOTAL_STEPS = 6
+const TOTAL_STEPS = 7
+
+function renderBusinessStep(props: StepProps, session: Record<string, string | number | null>) {
+  const bt = String(session.businessType ?? '')
+  if (bt === 'service')          return <StepService {...props} />
+  if (bt === 'digital_product')  return <StepDigitalProduct {...props} />
+  if (bt === 'personal_brand')   return <StepPersonalBrand {...props} />
+  return <StepBusiness {...props} />  // default: physical_product or unset (backward compat)
+}
 
 export default function StepPage() {
   const { token, step } = useParams<{ token: string; step: string }>()
@@ -72,7 +85,7 @@ export default function StepPage() {
     </div>
   )
 
-  const props = { lang, session, saving, onNext: goNext, onBack: goBack, step: stepNum, total: TOTAL_STEPS }
+  const props: StepProps = { lang, session, saving, onNext: goNext, onBack: goBack, step: stepNum, total: TOTAL_STEPS }
 
   return (
     <div className="min-h-screen bg-zinc-50">
@@ -82,10 +95,11 @@ export default function StepPage() {
         )}
         {stepNum === 1 && <StepWelcome {...props} />}
         {stepNum === 2 && <StepBasics {...props} />}
-        {stepNum === 3 && <StepSoul {...props} />}
-        {stepNum === 4 && <StepAudience {...props} />}
-        {stepNum === 5 && <StepBusiness {...props} />}
-        {stepNum === 6 && <StepVision {...props} />}
+        {stepNum === 3 && <StepBusinessType {...props} />}
+        {stepNum === 4 && <StepSoul {...props} />}
+        {stepNum === 5 && <StepAudience {...props} />}
+        {stepNum === 6 && renderBusinessStep(props, session)}
+        {stepNum === 7 && <StepVision {...props} />}
       </div>
     </div>
   )

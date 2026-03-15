@@ -143,6 +143,10 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       revenueModel: session.revenueModel,
       specificProduct: session.specificProduct,
       targetAudience: session.targetAudience,
+      expertise: session.expertise,
+      personalStory: session.personalStory,
+      credentialHighlights: session.credentialHighlights,
+      contentPillars: session.contentPillars,
       agencyContext: session.agencyContext,
     }
 

@@ -95,17 +95,55 @@ Respond ONLY with a valid JSON object. No markdown fences, no explanation, just 
   "emotionalArchetypeReason": "Why this archetype fits this brand",
   "simulationNotes": "3-4 paragraph market analysis: industry context in their country, competitive landscape, opportunity size, key risks, specific recommendations",
   "documents": {
-    "perfil": "Complete PERFIL.md — min 500 words. Include: Propósito, Producto/Servicio, ICP detallado, Visión, Arquetipo Emocional, Promesa de Valor, Lista de Nunca.",
+    "perfil": "Complete PERFIL.md — min 500 words. Include: Propósito, Producto/Servicio, ICP detallado, Visión, Arquetipo Emocional, Promesa de Valor, Lista de Nunca. If businessType is personal_brand, also include the client's Personal Story Arc, signature topics derived from their contentPillars, and their authority positioning based on credentialHighlights.",
     "funnel": "Complete FUNNEL.md — min 500 words. Include: Por qué este funnel, TOFU/MOFU/BOFU with specific tactics, métricas clave, next immediate step.",
     "contenido": "Complete CONTENIDO_MADRE.md — min 500 words. Include: 4 content pillars with real post examples, brand voice, editorial calendar, formats per channel.",
     "itr": "Complete ITR.md — min 400 words. Include: 6 indicator layers with weights, specific numeric goals from client data, monthly check-in process.",
     "roadmap": "Complete PLAN_90_DIAS.md — min 600 words. Include: Phase 1 (days 1-30) Foundation, Phase 2 (days 31-60) Authority, Phase 3 (days 61-90) Scale. Each phase has weekly tasks in checklist format (- [ ] action), numeric goals, key decisions."
   }
-}`
+}
+
+## PERSONAL BRAND SPECIAL INSTRUCTIONS
+When businessType === 'personal_brand':
+- The strategy must center on thought leadership and authority building, NOT product marketing
+- Content strategy should prioritize the client's personal narrative arc and expertise journey
+- The funnel should be built around the personal story → authority → trust → engagement loop
+- PERFIL.md must include: the client's Personal Story Arc (origin → struggle → transformation → mission), their Signature Topics (from contentPillars), and their Authority Stack (from credentialHighlights)
+- CONTENIDO_MADRE.md should define their Signature Voice and map each content pillar to an authority angle
+- Funnel 3 (Premium & Relationship) is the default for personal brands unless revenue signals suggest otherwise
+- All recommendations should treat the person as the brand — messaging, visuals, and tone must feel personal and authentic`
 
 // ── User Prompt ───────────────────────────────────────────────────────────────
 
 const lang = s.language === 'en' ? 'English' : 'Spanish'
+
+const businessSection = s.businessType === 'personal_brand' ? `
+## PERSONAL BRAND
+- Area of expertise: ${s.expertise || 'Not specified'}
+- Personal story: ${s.personalStory || 'Not specified'}
+- Credential highlights: ${s.credentialHighlights || 'Not specified'}
+- Content pillars: ${s.contentPillars || 'Not specified'}
+- Target audience: ${s.targetAudience || 'Not specified'}
+` : s.businessType === 'service' ? `
+## SERVICE BUSINESS
+- Service offered: ${s.productDescription || 'Not specified'}
+- Pricing model: ${s.revenueModel || 'Not specified'}
+- Typical price: $${s.productPrice || 0} USD
+- Business stage: ${s.businessStage || 'Not specified'}
+` : s.businessType === 'digital_product' ? `
+## DIGITAL PRODUCT
+- Product type: ${s.specificProduct || 'Not specified'}
+- Product description: ${s.productDescription || 'Not specified'}
+- Price: $${s.productPrice || 0} USD
+- Status: ${s.businessStage || 'Not specified'}
+- Monthly revenue: $${s.monthlyRevenue || 0} USD
+` : `
+## PHYSICAL PRODUCT / OTHER
+- Product/service: ${s.productDescription || 'Not specified'}
+- Price: $${s.productPrice || 0} USD
+- Business stage: ${s.businessStage || 'Not specified'}
+- Monthly revenue: $${s.monthlyRevenue || 0} USD
+`
 
 const USER_PROMPT = `Analyze this client and generate their complete strategy.
 
@@ -116,12 +154,9 @@ CLIENT INTERVIEW DATA:
 - Industry: ${s.industry}
 - Language preference: ${s.language}
 - Active channels: ${s.channels}
+- Business type: ${s.businessType || 'Not specified'}
 
-BUSINESS:
-- Product/Service: ${s.productDescription}
-- Price: $${s.productPrice} USD
-- Business stage: ${s.businessStage}
-- Monthly revenue: $${s.monthlyRevenue} USD
+${businessSection}
 
 BRAND SOUL:
 - Purpose: ${s.purpose}
@@ -137,7 +172,6 @@ VISION:
 - 3-year vision: ${s.vision3Years}
 
 AGENCY CONTEXT (internal):
-- Business type: ${s.businessType}
 - Revenue model: ${s.revenueModel}
 - Specific product: ${s.specificProduct}
 - Target audience (agency view): ${s.targetAudience}

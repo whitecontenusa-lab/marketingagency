@@ -7,7 +7,8 @@ const ALLOWED_FIELDS = new Set([
   'industry', 'country', 'productDescription', 'productPrice', 'businessStage',
   'monthlyRevenue', 'purpose', 'values', 'neverList', 'vision3Years', 'icpDemographic',
   'icpPain', 'icpDesire', 'agencyContext', 'businessType', 'revenueModel',
-  'specificProduct', 'targetAudience',
+  'specificProduct', 'targetAudience', 'expertise', 'personalStory',
+  'credentialHighlights', 'contentPillars',
 ])
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {

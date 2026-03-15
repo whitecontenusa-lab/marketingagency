@@ -1,9 +1,9 @@
 export type Lang = 'es' | 'en'
 
-// Step names shown in progress bar — order: Contacto → Alma → Audiencia → Negocio → Visión
+// Step names shown in progress bar — order: Contacto → Tu tipo → Alma → Audiencia → Negocio → Visión
 export const STEP_NAMES = {
-  es: ['Contacto', 'Tu alma', 'Tu audiencia', 'Tu negocio', 'Tu visión'],
-  en: ['Contact', 'Your soul', 'Your audience', 'Your business', 'Your vision'],
+  es: ['Contacto', 'Tu tipo', 'Tu alma', 'Tu audiencia', 'Tu negocio', 'Tu visión'],
+  en: ['Contact', 'Your type', 'Your soul', 'Your audience', 'Your business', 'Your vision'],
 } as const
 
 export const t = {
@@ -31,7 +31,19 @@ export const t = {
     whatsapp: 'WhatsApp (con código de país)',
     whatsappHint: 'Ej: +57 300 123 4567',
 
-    // Step 3 — Soul (moved before business)
+    // Step 3 — Business Type (NEW)
+    btStepTitle: '¿Qué tipo de negocio tienes?',
+    btStepSubtitle: 'Esto personaliza toda tu estrategia',
+    btPhysical: 'Producto Físico',
+    btPhysicalDesc: 'Tiendas, e-commerce, productos tangibles',
+    btService: 'Servicio',
+    btServiceDesc: 'Consultoría, coaching, agencias, freelance',
+    btDigital: 'Producto Digital',
+    btDigitalDesc: 'Cursos, ebooks, apps, templates',
+    btPersonal: 'Marca Personal',
+    btPersonalDesc: 'Tú eres la marca — influencer, experto, speaker',
+
+    // Step 4 — Soul (was step 3)
     step3Title: 'El alma de tu marca',
     step3Subtitle: 'Las marcas que duran no se construyen con estrategias. Se construyen con propósito. Cuéntanos el tuyo.',
     purpose: '¿Por qué existe esta marca en el mundo?',
@@ -45,7 +57,7 @@ export const t = {
     neverListHint: 'Tus límites son tu identidad. Sé honesto.',
     addNever: '+ Agregar',
 
-    // Step 4 — Audience
+    // Step 5 — Audience (was step 4)
     step4Title: 'A quién le cambias la vida',
     step4Subtitle: 'No "todo el mundo". Una persona específica con un problema real. Cuéntanos quién es.',
     icpDemographic: '¿Quién es? Descríbelo como si fuera una persona real',
@@ -55,9 +67,11 @@ export const t = {
     icpDesire: '¿Qué quiere lograr de verdad?',
     icpDesireHint: 'No el resultado funcional — la transformación. Cómo quiere sentirse.',
 
-    // Step 5 — Business (moved after soul+audience)
+    // Step 6 — Business / Value Proposition (branched by businessType)
     step5Title: 'Tu propuesta de valor',
     step5Subtitle: 'Ahora que sabemos quién eres y a quién sirves, cuéntanos qué ofreces y desde dónde.',
+    step6Title: 'Tu propuesta de valor',
+    step6Subtitle: 'Ahora que sabemos quién eres y a quién sirves, cuéntanos qué ofreces y desde dónde.',
     productDescription: '¿Qué ofreces exactamente?',
     productDescriptionHint: 'Descríbelo como se lo explicarías a un amigo que no sabe nada del tema.',
     productPrice: '¿A qué precio lo vendes? (USD)',
@@ -69,9 +83,9 @@ export const t = {
     monthlyRevenue: '¿Cuánto estás generando por mes aproximadamente? (USD)',
     monthlyRevenueHint: 'Orden de magnitud está bien. Esta información es confidencial.',
 
-    // Step 6 — Vision
-    step6Title: 'El mundo que imaginas',
-    step6Subtitle: 'El lugar al que vas define cada decisión que tomas hoy.',
+    // Step 7 — Vision (was step 6)
+    step7Title: 'El mundo que imaginas',
+    step7Subtitle: 'El lugar al que vas define cada decisión que tomas hoy.',
     vision: 'Si todo sale bien en los próximos 3 años, ¿cómo se ve tu vida y tu marca?',
     visionHint: 'Sé ambicioso. Sé específico. ¿Cuántas personas alcanzas? ¿Cómo te reconocen? ¿Qué impacto dejaste?',
 
@@ -178,7 +192,19 @@ export const t = {
     whatsapp: 'WhatsApp (with country code)',
     whatsappHint: 'E.g.: +1 305 123 4567',
 
-    // Step 3 — Soul
+    // Step 3 — Business Type (NEW)
+    btStepTitle: 'What type of business do you have?',
+    btStepSubtitle: 'This customizes your entire strategy',
+    btPhysical: 'Physical Product',
+    btPhysicalDesc: 'Stores, e-commerce, tangible products',
+    btService: 'Service',
+    btServiceDesc: 'Consulting, coaching, agencies, freelance',
+    btDigital: 'Digital Product',
+    btDigitalDesc: 'Courses, ebooks, apps, templates',
+    btPersonal: 'Personal Brand',
+    btPersonalDesc: 'You are the brand — influencer, expert, speaker',
+
+    // Step 4 — Soul (was step 3)
     step3Title: 'The soul of your brand',
     step3Subtitle: "Brands that last aren't built with strategies. They're built with purpose. Tell us yours.",
     purpose: 'Why does this brand exist in the world?',
@@ -192,7 +218,7 @@ export const t = {
     neverListHint: 'Your limits are your identity. Be honest.',
     addNever: '+ Add',
 
-    // Step 4 — Audience
+    // Step 5 — Audience (was step 4)
     step4Title: "Who you're changing lives for",
     step4Subtitle: 'Not "everyone". One specific person with a real problem. Tell us who they are.',
     icpDemographic: 'Who are they? Describe them as if they were a real person',
@@ -202,9 +228,11 @@ export const t = {
     icpDesire: 'What do they really want to achieve?',
     icpDesireHint: "Not the functional result — the transformation. How they want to feel.",
 
-    // Step 5 — Business
+    // Step 6 — Business / Value Proposition (branched by businessType)
     step5Title: 'Your value proposition',
     step5Subtitle: "Now that we know who you are and who you serve, tell us what you offer and where you stand.",
+    step6Title: 'Your value proposition',
+    step6Subtitle: "Now that we know who you are and who you serve, tell us what you offer and where you stand.",
     productDescription: 'What exactly do you offer?',
     productDescriptionHint: "Describe it like you'd explain it to a friend who knows nothing about it.",
     productPrice: 'At what price? (USD)',
@@ -216,9 +244,9 @@ export const t = {
     monthlyRevenue: 'How much are you generating per month approximately? (USD)',
     monthlyRevenueHint: 'Order of magnitude is fine. This is confidential.',
 
-    // Step 6 — Vision
-    step6Title: 'The world you imagine',
-    step6Subtitle: 'Where you\'re going defines every decision you make today.',
+    // Step 7 — Vision (was step 6)
+    step7Title: 'The world you imagine',
+    step7Subtitle: 'Where you\'re going defines every decision you make today.',
     vision: 'If everything goes well in the next 3 years, what does your life and brand look like?',
     visionHint: 'Be ambitious. Be specific. How many people do you reach? How are you known? What impact did you leave?',
 
