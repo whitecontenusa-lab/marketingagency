@@ -313,6 +313,20 @@ model OnboardingSession {
   revenueModel         String    @default("")
   specificProduct      String    @default("")
   targetAudience       String    @default("")
+
+  // Branding assessment (Feature 3)
+  hasBranding           Boolean   @default(false)
+  brandColors           String    @default("")
+  brandFonts            String    @default("")
+  brandLogoUrl          String    @default("")
+  brandBriefGenerated   Boolean   @default(false)
+
+  // Personal brand (Feature 6)
+  expertise             String    @default("")
+  personalStory         String    @default("")
+  credentialHighlights  String    @default("")
+  contentPillars        String    @default("")
+
   workspaceId          String?
   token                String    @unique @default(cuid())
   expiresAt            DateTime
@@ -334,6 +348,8 @@ model OnboardingSession {
   campaigns            Campaign[]
   contentPieces        ContentPiece[]
   marketIntelligence   MarketIntelligence?
+  contentCycles        ContentCycle[]
+  reports              ClientReport[]
 }
 
 model InterviewQuestion {
@@ -492,10 +508,45 @@ model ContentPiece {
   scheduledAt DateTime?
   publishedAt DateTime?
   aiGenerated Boolean   @default(false)
+  releasedAt  DateTime?
+  cycleId     String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   session     OnboardingSession @relation(fields: [sessionId], references: [id])
   campaign    Campaign?         @relation(fields: [campaignId], references: [id])
+  cycle       ContentCycle?     @relation(fields: [cycleId], references: [id])
+}
+
+// ─── PHASE C: CONTENT CYCLES ─────────────────────────────────
+model ContentCycle {
+  id              String            @id @default(cuid())
+  sessionId       String
+  session         OnboardingSession @relation(fields: [sessionId], references: [id])
+  cycleNumber     Int               @default(1)
+  status          String            @default("locked")
+  billingOk       Boolean           @default(false)
+  adminApprovedAt DateTime?
+  generatedAt     DateTime?
+  deliveryDate    DateTime?
+  createdAt       DateTime          @default(now())
+  contentPieces   ContentPiece[]
+
+  @@unique([sessionId, cycleNumber])
+}
+
+// ─── PHASE C: CLIENT REPORTS ──────────────────────────────────
+model ClientReport {
+  id          String            @id @default(cuid())
+  sessionId   String
+  session     OnboardingSession @relation(fields: [sessionId], references: [id])
+  type        String
+  month       Int
+  year        Int
+  content     String
+  generatedAt DateTime          @default(now())
+  sentAt      DateTime?
+
+  @@unique([sessionId, type, month, year])
 }
 
 // ─── PHASE B: HUMAN REVIEW QUEUE ─────────────────────────────
