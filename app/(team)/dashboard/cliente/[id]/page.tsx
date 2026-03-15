@@ -28,6 +28,7 @@ interface Blueprint {
   id: string
   contentMd: string
   agencyApprovedAt: string | null
+  deliveredAt: string | null
   createdAt: string
 }
 
@@ -140,6 +141,11 @@ export default function ClientePage() {
   const isApproved = !!blueprint?.agencyApprovedAt
   const clientName = String(session.clientName ?? '')
   const brandName = String(session.brandName ?? '')
+
+  const pendingDelivery = !!(blueprint?.agencyApprovedAt && blueprint?.deliveredAt && new Date(blueprint.deliveredAt) > new Date())
+  const hoursRemaining = pendingDelivery
+    ? Math.ceil((new Date(blueprint!.deliveredAt!).getTime() - Date.now()) / (1000 * 60 * 60))
+    : 0
 
   return (
     <div className="min-h-screen bg-zinc-50">
@@ -336,6 +342,22 @@ export default function ClientePage() {
                       <p className="font-semibold text-green-800 mb-1">✓ Estrategia aprobada y publicada</p>
                       <p className="text-sm text-green-700">Los archivos están en Gitea. El ecosistema está activo para este cliente.</p>
                       <p className="text-xs text-green-600 mt-2">Aprobado: {blueprint?.agencyApprovedAt ? new Date(blueprint.agencyApprovedAt).toLocaleString('es-CO') : ''}</p>
+                      {pendingDelivery && (
+                        <div className="flex items-center gap-3 mt-3">
+                          <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1.5 rounded-full font-medium">
+                            ⏳ Se entrega al cliente en ~{hoursRemaining}h
+                          </span>
+                          <button
+                            onClick={async () => {
+                              await fetch(`/api/sessions/${id}/deliver-now`, { method: 'POST' })
+                              window.location.reload()
+                            }}
+                            className="text-xs text-zinc-500 hover:text-zinc-700 underline"
+                          >
+                            Entregar ahora
+                          </button>
+                        </div>
+                      )}
                     </div>
                     {clientCredentials && (
                       <ClientCredentialsCard

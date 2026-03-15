@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { marked } from 'marked'
 import { getText, t, type Lang } from '@/lib/i18n'
+import { DeliveryCountdown } from './DeliveryCountdown'
 
 type DocKey = 'perfil' | 'funnel' | 'contenido' | 'itr' | 'roadmap'
 
@@ -27,9 +28,10 @@ interface Props {
   approvedAt: string | null
   strategy: Record<string, unknown> | null
   language: 'es' | 'en'
+  deliveredAt?: string | null
 }
 
-export default function ClientPortalView({ sessionId, clientName, brandName, approvedAt, strategy: rawStrategy, language }: Props) {
+export default function ClientPortalView({ sessionId, clientName, brandName, approvedAt, strategy: rawStrategy, language, deliveredAt }: Props) {
   const router = useRouter()
   const [activeDoc, setActiveDoc] = useState<DocKey>('perfil')
   const [loggingOut, setLoggingOut] = useState(false)
@@ -82,7 +84,11 @@ export default function ClientPortalView({ sessionId, clientName, brandName, app
       </nav>
 
       <div className="max-w-4xl mx-auto px-6 py-8">
-        {!strategy ? (
+        {!strategy && deliveredAt ? (
+          <div className="bg-zinc-900 rounded-2xl border border-zinc-800">
+            <DeliveryCountdown deliveredAt={deliveredAt} lang={lang} />
+          </div>
+        ) : !strategy ? (
           <div className="bg-white rounded-2xl border border-zinc-100 p-10 text-center">
             <div className="w-16 h-16 bg-zinc-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">⏳</div>
             <h3 className="text-xl font-bold text-zinc-900 mb-2">{getText(lang, 'portal.strategyPending')}</h3>

@@ -91,6 +91,12 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     data: { agencyApprovedAt: new Date() },
   })
 
+  const deliveredAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
+  await db.blueprint.update({
+    where: { id: blueprint.id },
+    data: { deliveredAt },
+  })
+
   // Mark session as complete
   await db.onboardingSession.update({
     where: { id },

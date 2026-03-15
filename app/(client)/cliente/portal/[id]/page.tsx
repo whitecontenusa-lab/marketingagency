@@ -25,10 +25,18 @@ export default async function ClientPortalPage({ params }: { params: Promise<{ i
   if (!session) redirect('/cliente/login')
 
   const blueprint = session.blueprints[0] ?? null
+  const now = new Date()
+  // Backward compat: deliveredAt=null means old blueprint, show immediately
+  const isDelivered = !blueprint?.deliveredAt || blueprint.deliveredAt <= now
+
   let strategy: Record<string, unknown> | null = null
-  if (blueprint?.contentMd) {
+  if (blueprint?.contentMd && isDelivered) {
     try { strategy = JSON.parse(blueprint.contentMd) } catch { /* ignore */ }
   }
+
+  const pendingDeliveredAt = (!isDelivered && blueprint?.deliveredAt)
+    ? blueprint.deliveredAt.toISOString()
+    : null
 
   return (
     <ClientPortalView
@@ -38,6 +46,7 @@ export default async function ClientPortalPage({ params }: { params: Promise<{ i
       approvedAt={blueprint?.agencyApprovedAt?.toISOString() ?? null}
       strategy={strategy}
       language={session.language as 'es' | 'en'}
+      deliveredAt={pendingDeliveredAt}
     />
   )
 }
