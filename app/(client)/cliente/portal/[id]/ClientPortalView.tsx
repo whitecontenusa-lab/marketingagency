@@ -6,6 +6,7 @@ import { getText, t, type Lang } from '@/lib/i18n'
 import { DeliveryCountdown } from './DeliveryCountdown'
 import TabContenidoCiclo from '@/components/portal/TabContenidoCiclo'
 import TabMisReportes from '@/components/portal/TabMisReportes'
+import TabCalendario from '@/components/portal/TabCalendario'
 
 type DocKey = 'perfil' | 'funnel' | 'contenido' | 'itr' | 'roadmap'
 
@@ -37,7 +38,7 @@ export default function ClientPortalView({ sessionId, clientName, brandName, app
   const router = useRouter()
   const [activeDoc, setActiveDoc] = useState<DocKey>('perfil')
   const [loggingOut, setLoggingOut] = useState(false)
-  const [portalTab, setPortalTab] = useState<'strategy' | 'content' | 'reports'>('strategy')
+  const [portalTab, setPortalTab] = useState<'strategy' | 'content' | 'calendar' | 'reports'>('strategy')
 
   const lang: Lang = language === 'en' ? 'en' : 'es'
   const strategy = rawStrategy as Strategy | null
@@ -106,6 +107,14 @@ export default function ClientPortalView({ sessionId, clientName, brandName, app
             {lang === 'en' ? 'Monthly Content' : 'Contenido del Mes'}
           </button>
           <button
+            onClick={() => setPortalTab('calendar')}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              portalTab === 'calendar' ? 'bg-zinc-700 text-white' : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            {lang === 'en' ? 'Calendar' : 'Calendario'}
+          </button>
+          <button
             onClick={() => setPortalTab('reports')}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
               portalTab === 'reports' ? 'bg-zinc-700 text-white' : 'text-zinc-400 hover:text-zinc-200'
@@ -117,6 +126,12 @@ export default function ClientPortalView({ sessionId, clientName, brandName, app
 
         {portalTab === 'content' && (
           <TabContenidoCiclo sessionId={sessionId} lang={lang} />
+        )}
+
+        {portalTab === 'calendar' && (
+          <div className="bg-white rounded-2xl border border-zinc-100 p-6">
+            <TabCalendario sessionId={sessionId} lang={lang} />
+          </div>
         )}
 
         {portalTab === 'reports' && (

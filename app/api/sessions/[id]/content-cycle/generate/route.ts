@@ -449,6 +449,8 @@ Responde SOLO el array JSON.`
   })
 
   const clientUser = await db.clientUser.findUnique({ where: { sessionId: id } })
+  const portalUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/cliente/portal/${id}`
+
   if (clientUser?.email) {
     const { sendContentCycleEmail } = await import('@/lib/mailer')
     sendContentCycleEmail({
@@ -456,9 +458,21 @@ Responde SOLO el array JSON.`
       clientName: session.clientName,
       cycleNumber: cycle.cycleNumber,
       deliveryDate: releasedAt,
-      portalUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/cliente/portal/${id}`,
+      portalUrl,
       language: lang,
     }).catch(e => console.error('[mailer] content cycle email failed:', e))
+  }
+
+  // WhatsApp notification — content ready
+  if (session.whatsapp) {
+    const { waContentReady } = await import('@/lib/whatsapp')
+    waContentReady({
+      phone: session.whatsapp,
+      clientName: session.clientName,
+      cycleNumber: cycle.cycleNumber,
+      portalUrl,
+      language: session.language,
+    }).catch(e => console.error('[wa] content ready notification failed:', e))
   }
 
   return NextResponse.json({ ok: true, count: pieces.slice(0, 30).length })

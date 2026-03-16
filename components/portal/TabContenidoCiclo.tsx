@@ -245,6 +245,7 @@ export default function TabContenidoCiclo({ sessionId, lang }: { sessionId: stri
   const [cycles, setCycles] = useState<ContentCycle[]>([])
   const [loading, setLoading] = useState(true)
   const [requesting, setRequesting] = useState(false)
+  const [paying, setPaying] = useState(false)
   const [error, setError] = useState('')
   const s = strings[lang]
 
@@ -266,6 +267,22 @@ export default function TabContenidoCiclo({ sessionId, lang }: { sessionId: stri
     const interval = setInterval(fetchCycles, 5000)
     return () => clearInterval(interval)
   }, [cycles, fetchCycles])
+
+  async function payForCycle(cycleId: string) {
+    setPaying(true)
+    setError('')
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}/content-cycle/checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cycleId }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error ?? s.error); return }
+      if (data.url) window.location.href = data.url
+    } catch { setError(s.error) }
+    finally { setPaying(false) }
+  }
 
   async function requestCycle() {
     setRequesting(true)
@@ -330,10 +347,22 @@ export default function TabContenidoCiclo({ sessionId, lang }: { sessionId: stri
       {activeCycle && activeCycle.status === 'payment_pending' && (
         <div className="bg-amber-50 border border-amber-100 rounded-2xl p-6">
           <div className="flex items-start gap-3">
-            <span className="text-2xl">⏳</span>
-            <div>
+            <span className="text-2xl">💳</span>
+            <div className="flex-1">
               <p className="font-semibold text-amber-800 mb-1">{s.cycleLabel(activeCycle.cycleNumber)}</p>
-              <p className="text-sm text-amber-700">{s.paymentPending}</p>
+              <p className="text-sm text-amber-700 mb-4">{s.paymentPending}</p>
+              <button
+                onClick={() => payForCycle(activeCycle.id)}
+                disabled={paying}
+                className="bg-amber-600 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-amber-700 transition disabled:opacity-50 flex items-center gap-2 text-sm"
+              >
+                {paying ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    {lang === 'es' ? 'Redirigiendo...' : 'Redirecting...'}
+                  </>
+                ) : `💳 ${lang === 'es' ? 'Pagar y activar ciclo' : 'Pay to activate cycle'}`}
+              </button>
             </div>
           </div>
         </div>

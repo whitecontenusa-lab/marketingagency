@@ -266,14 +266,15 @@ model ContentIntelligence {
 
 // ─── CLIENT AUTH ─────────────────────────────────────────────
 model ClientUser {
-  id           String            @id @default(cuid())
-  email        String            @unique
-  passwordHash String
-  sessionId    String            @unique
-  session      OnboardingSession @relation(fields: [sessionId], references: [id])
-  sessions     ClientSession[]
-  createdAt    DateTime          @default(now())
-  mustResetPwd Boolean           @default(true)
+  id               String            @id @default(cuid())
+  email            String            @unique
+  passwordHash     String
+  sessionId        String            @unique
+  session          OnboardingSession @relation(fields: [sessionId], references: [id])
+  sessions         ClientSession[]
+  createdAt        DateTime          @default(now())
+  mustResetPwd     Boolean           @default(true)
+  stripeCustomerId String?
 }
 
 model ClientSession {
@@ -522,13 +523,20 @@ model ContentPiece {
   status      String    @default("draft") // draft, ready, scheduled, published
   scheduledAt DateTime?
   publishedAt DateTime?
-  aiGenerated Boolean   @default(false)
-  releasedAt  DateTime?
-  cycleId     String?
-  funnelStage String    @default("")  // tofu | mofu | bofu
-  week        Int       @default(0)   // 1-4 within the monthly cycle
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  aiGenerated      Boolean   @default(false)
+  releasedAt       DateTime?
+  cycleId          String?
+  funnelStage      String    @default("")  // tofu | mofu | bofu
+  week             Int       @default(0)   // 1-4 within the monthly cycle
+  // Performance metrics (client inputs after publishing)
+  reach            Int       @default(0)
+  impressions      Int       @default(0)
+  engagementRate   Float     @default(0)
+  saves            Int       @default(0)
+  shares           Int       @default(0)
+  metricsUpdatedAt DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
   session     OnboardingSession @relation(fields: [sessionId], references: [id])
   campaign    Campaign?         @relation(fields: [campaignId], references: [id])
   cycle       ContentCycle?     @relation(fields: [cycleId], references: [id])
@@ -545,6 +553,7 @@ model ContentCycle {
   adminApprovedAt DateTime?
   generatedAt     DateTime?
   deliveryDate    DateTime?
+  stripeSessionId String?
   createdAt       DateTime          @default(now())
   contentPieces   ContentPiece[]
 

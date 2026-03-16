@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import { sendClientCredentials } from '@/lib/mailer'
+import { waStrategyReady } from '@/lib/whatsapp'
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const teamSession = await getSession()
@@ -132,6 +133,16 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
         portalUrl,
         language: session.language === 'en' ? 'en' : 'es',
       }).catch(err => console.error('[mailer] Failed to send credentials email:', err))
+
+      // WhatsApp notification — strategy ready
+      if (session.whatsapp) {
+        waStrategyReady({
+          phone: session.whatsapp,
+          clientName: session.clientName,
+          portalUrl,
+          language: session.language,
+        }).catch(err => console.error('[wa] Strategy ready notification failed:', err))
+      }
     }
   }
 

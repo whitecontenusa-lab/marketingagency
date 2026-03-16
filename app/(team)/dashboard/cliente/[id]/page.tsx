@@ -9,6 +9,7 @@ import TabCampanas from './TabCampanas'
 import TabInteligencia from './TabInteligencia'
 import TabCicloContenido from './TabCicloContenido'
 import { TabReportes } from './TabReportes'
+import TabCalendarioDash from './TabCalendarioDash'
 
 interface Strategy {
   lang: string
@@ -46,7 +47,7 @@ export default function ClientePage() {
   const [session, setSession] = useState<Record<string, unknown> | null>(null)
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null)
   const [strategy, setStrategy] = useState<Strategy | null>(null)
-  const [activeTab, setActiveTab] = useState<'estrategia' | 'checklist' | 'propuesta' | 'campanas' | 'inteligencia' | 'ciclo' | 'reportes'>('estrategia')
+  const [activeTab, setActiveTab] = useState<'estrategia' | 'checklist' | 'propuesta' | 'campanas' | 'inteligencia' | 'ciclo' | 'calendario' | 'reportes'>('estrategia')
   const [activeDoc, setActiveDoc] = useState<'perfil' | 'funnel' | 'contenido' | 'itr' | 'roadmap'>('perfil')
   const [analyzing, setAnalyzing] = useState(false)
   const [generating, setGenerating] = useState(false) // runner is working
@@ -198,6 +199,7 @@ export default function ClientePage() {
             { key: 'campanas', label: 'Campañas' },
             { key: 'inteligencia', label: 'Inteligencia' },
             { key: 'ciclo', label: 'Ciclo de Contenido' },
+            { key: 'calendario', label: 'Calendario' },
             { key: 'reportes', label: 'Reportes' },
           ] as const).map(tab => (
             <button
@@ -232,6 +234,13 @@ export default function ClientePage() {
 
         {/* CICLO DE CONTENIDO TAB */}
         {activeTab === 'ciclo' && <TabCicloContenido sessionId={id} />}
+
+        {/* CALENDARIO TAB */}
+        {activeTab === 'calendario' && (
+          <div className="bg-white rounded-2xl border border-zinc-100 p-6">
+            <TabCalendarioDash sessionId={id} />
+          </div>
+        )}
 
         {/* REPORTES TAB */}
         {activeTab === 'reportes' && <TabReportes sessionId={id} />}

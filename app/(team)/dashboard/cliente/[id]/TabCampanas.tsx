@@ -11,6 +11,8 @@ interface ContentPiece {
   id: string; platform: string; format: string; hook: string
   body: string; cta: string; hashtags: string; status: string
   scheduledAt: string | null; aiGenerated: boolean; campaignId: string | null
+  reach: number; impressions: number; engagementRate: number
+  saves: number; shares: number; metricsUpdatedAt: string | null
 }
 
 const PLATFORMS = ['instagram', 'tiktok', 'facebook', 'linkedin', 'email', 'blog']
@@ -42,6 +44,9 @@ export default function TabCampanas({ sessionId }: { sessionId: string }) {
   const [selectedCampaign, setSelectedCampaign] = useState<string | 'all'>('all')
   const [activePlatform, setActivePlatform] = useState<string | 'all'>('all')
   const [editingPiece, setEditingPiece] = useState<ContentPiece | null>(null)
+  const [metricsOpen, setMetricsOpen] = useState<string | null>(null)
+  const [metricsForm, setMetricsForm] = useState({ reach: '', impressions: '', engagementRate: '', saves: '', shares: '' })
+  const [savingMetrics, setSavingMetrics] = useState(false)
   const [showNewCampaign, setShowNewCampaign] = useState(false)
   const [showGenerate, setShowGenerate] = useState(false)
   const [generating, setGenerating] = useState(false)
@@ -91,6 +96,35 @@ export default function TabCampanas({ sessionId }: { sessionId: string }) {
       alert(`Error: ${err.error}`)
     }
     setGenerating(false)
+  }
+
+  function openMetrics(piece: ContentPiece) {
+    setMetricsOpen(piece.id)
+    setMetricsForm({
+      reach: String(piece.reach || ''),
+      impressions: String(piece.impressions || ''),
+      engagementRate: String(piece.engagementRate || ''),
+      saves: String(piece.saves || ''),
+      shares: String(piece.shares || ''),
+    })
+  }
+
+  async function saveMetrics(pieceId: string) {
+    setSavingMetrics(true)
+    await fetch(`/api/sessions/${sessionId}/content/${pieceId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        reach: Number(metricsForm.reach) || 0,
+        impressions: Number(metricsForm.impressions) || 0,
+        engagementRate: parseFloat(metricsForm.engagementRate) || 0,
+        saves: Number(metricsForm.saves) || 0,
+        shares: Number(metricsForm.shares) || 0,
+      }),
+    })
+    await load()
+    setMetricsOpen(null)
+    setSavingMetrics(false)
   }
 
   async function updatePiece(pieceId: string, data: Partial<ContentPiece>) {
@@ -359,6 +393,10 @@ export default function TabCampanas({ sessionId }: { sessionId: string }) {
                         <button onClick={() => advanceStatus(piece)}
                           className="text-xs text-zinc-500 hover:text-zinc-900 border border-zinc-200 px-2 py-1 rounded-lg transition"
                           title="Avanzar estado">→</button>
+                        <button onClick={() => openMetrics(piece)}
+                          className="text-xs text-zinc-500 hover:text-zinc-900 border border-zinc-200 px-2 py-1 rounded-lg transition">
+                          📊
+                        </button>
                         <button onClick={() => setEditingPiece(piece)}
                           className="text-xs text-zinc-500 hover:text-zinc-900 border border-zinc-200 px-2 py-1 rounded-lg transition">
                           Editar
@@ -392,6 +430,64 @@ export default function TabCampanas({ sessionId }: { sessionId: string }) {
                     )}
                     {validationResults[piece.id]?.ok && (
                       <p className="text-xs text-green-600 mt-1 font-medium">✓ Validado — alineado con la marca</p>
+                    )}
+                    {/* Metrics display */}
+                    {piece.impressions > 0 && (
+                      <div className="flex gap-4 mt-2 text-xs text-zinc-400">
+                        {piece.impressions > 0 && <span>👁 {piece.impressions.toLocaleString()}</span>}
+                        {piece.reach > 0 && <span>📡 {piece.reach.toLocaleString()}</span>}
+                        {piece.engagementRate > 0 && <span>💬 {piece.engagementRate.toFixed(1)}%</span>}
+                        {piece.saves > 0 && <span>🔖 {piece.saves}</span>}
+                        {piece.shares > 0 && <span>↗ {piece.shares}</span>}
+                      </div>
+                    )}
+                    {/* Inline metrics form */}
+                    {metricsOpen === piece.id && (
+                      <div className="mt-3 p-3 bg-zinc-50 rounded-lg border border-zinc-200">
+                        <p className="text-xs font-semibold text-zinc-600 mb-2">Ingresar métricas de rendimiento</p>
+                        <div className="grid grid-cols-3 gap-2 mb-2">
+                          <div>
+                            <label className="text-[10px] text-zinc-500 mb-0.5 block">Impresiones</label>
+                            <input type="number" min="0" value={metricsForm.impressions}
+                              onChange={e => setMetricsForm(m => ({ ...m, impressions: e.target.value }))}
+                              className="w-full border border-zinc-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-500 mb-0.5 block">Alcance</label>
+                            <input type="number" min="0" value={metricsForm.reach}
+                              onChange={e => setMetricsForm(m => ({ ...m, reach: e.target.value }))}
+                              className="w-full border border-zinc-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-500 mb-0.5 block">Engagement %</label>
+                            <input type="number" min="0" step="0.1" value={metricsForm.engagementRate}
+                              onChange={e => setMetricsForm(m => ({ ...m, engagementRate: e.target.value }))}
+                              className="w-full border border-zinc-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-500 mb-0.5 block">Guardados</label>
+                            <input type="number" min="0" value={metricsForm.saves}
+                              onChange={e => setMetricsForm(m => ({ ...m, saves: e.target.value }))}
+                              className="w-full border border-zinc-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-500 mb-0.5 block">Compartidos</label>
+                            <input type="number" min="0" value={metricsForm.shares}
+                              onChange={e => setMetricsForm(m => ({ ...m, shares: e.target.value }))}
+                              className="w-full border border-zinc-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={() => saveMetrics(piece.id)} disabled={savingMetrics}
+                            className="bg-zinc-900 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-zinc-700 transition disabled:opacity-50">
+                            {savingMetrics ? 'Guardando...' : 'Guardar métricas'}
+                          </button>
+                          <button onClick={() => setMetricsOpen(null)}
+                            className="text-xs text-zinc-500 hover:text-zinc-700 px-2 py-1.5">
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}
