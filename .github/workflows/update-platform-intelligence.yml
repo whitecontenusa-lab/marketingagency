@@ -1,0 +1,50 @@
+name: Update Platform Intelligence
+
+on:
+  schedule:
+    # Every Monday at 8:00 AM UTC
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual trigger'
+        required: false
+        default: 'Manual team request'
+
+jobs:
+  update-platform-intelligence:
+    name: Generate Platform Intelligence
+    runs-on: [self-hosted, Windows, avilion-windows]
+    timeout-minutes: 90
+
+    env:
+      # Claude auth lives in the user profile — runner must find it
+      HOME: C:\Users\geren
+      USERPROFILE: C:\Users\geren
+      APPDATA: C:\Users\geren\AppData\Roaming
+      LOCALAPPDATA: C:\Users\geren\AppData\Local
+      # Portal connection
+      PORTAL_URL: ${{ secrets.PORTAL_URL }}
+      PORTAL_INTERNAL_SECRET: ${{ secrets.PORTAL_INTERNAL_SECRET }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verify portal is reachable
+        shell: cmd
+        run: |
+          curl -s -o NUL -w "Portal status: %%{http_code}" ${{ secrets.PORTAL_URL }}/api/health || echo "Warning: Portal health check failed"
+
+      - name: Generate platform intelligence
+        shell: cmd
+        run: node scripts\generate-platform-intelligence.mjs
+
+      - name: Summary
+        if: always()
+        run: echo "Platform intelligence update complete. Review drafts at ${{ secrets.PORTAL_URL }}/dashboard/plataformas"

@@ -244,6 +244,23 @@ ${s.agencyLearnings.map((l, i) => `${i + 1}. ${l}`).join('\n')}
 Use these learnings to inform funnel type selection and archetype assignment.
 ` : ''}
 
+${s.platformIntelligence?.length ? `
+PLATFORM INTELLIGENCE (approved by team — use to inform CONTENIDO_MADRE.md format recommendations and FUNNEL.md channel tactics):
+
+${s.platformIntelligence.map(pi => `${pi.platform.toUpperCase()}:
+  Algorithm rewards: ${Array.isArray(pi.algorithmPriorities) ? pi.algorithmPriorities.slice(0, 3).join(' | ') : ''}
+  Best formats: ${Array.isArray(pi.bestFormats) ? pi.bestFormats.slice(0, 2).map(f => f.format).join(', ') : ''}
+  Frequency: ${pi.bestFrequency || ''}
+  Trending now: ${Array.isArray(pi.currentTrends) ? pi.currentTrends.slice(0, 2).map(t => t.angle || t.trend).join(' | ') : ''}
+  Avoid: ${Array.isArray(pi.avoidList) ? pi.avoidList.slice(0, 2).map(a => a.what).join(', ') : ''}${pi.teamNotes ? `\n  Team note: ${pi.teamNotes}` : ''}`).join('\n\n')}
+
+CRITICAL INSTRUCTIONS FOR USING PLATFORM INTELLIGENCE:
+- CONTENIDO_MADRE.md: In the channelFormats section, recommend the formats listed above as best-performing. Do NOT recommend formats that appear in the avoidList.
+- FUNNEL.md: In TOFU/MOFU/BOFU sections, reference the trending content types when suggesting tactics for each platform.
+- roadmap (PLAN_90_DIAS.md): In Phase 1, recommend starting with the highest-performing formats for each platform listed above.
+- The posting frequency recommendations above should inform the weekly content plan in roadmap.
+` : ''}
+
 Generate the complete strategy. All documents must be in ${lang}.
 The simulation notes should include specific market insights for ${s.industry} in ${s.country}.
 Be specific, actionable, and grounded in their actual answers.

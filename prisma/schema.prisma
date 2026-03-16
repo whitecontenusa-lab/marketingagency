@@ -566,6 +566,26 @@ model ClientReport {
   @@unique([sessionId, type, month, year])
 }
 
+// ─── PLATFORM INTELLIGENCE ───────────────────────────────────
+model PlatformIntelligence {
+  id                  String    @id @default(cuid())
+  platform            String    @unique  // instagram, facebook, tiktok, youtube, threads, linkedin, pinterest, x
+  algorithmPriorities String    @default("") // JSON: what the algorithm currently rewards
+  bestFormats         String    @default("") // JSON: top formats with engagement notes
+  bestFrequency       String    @default("") // posting frequency recommendation
+  optimalTiming       String    @default("") // best times/days to post
+  currentTrends       String    @default("") // JSON: trending content types + angles
+  avoidList           String    @default("") // JSON: what gets suppressed or shadowbanned
+  recentChanges       String    @default("") // JSON: known algorithm changes (last 90 days)
+  emergingFeatures    String    @default("") // JSON: new platform features worth using
+  confidence          String    @default("medium") // high | medium | low
+  teamNotes           String    @default("") // team-added manual notes after review
+  status              String    @default("draft") // draft | approved | archived
+  generatedAt         DateTime  @default(now())
+  approvedAt          DateTime?
+  approvedBy          String?
+}
+
 // ─── PHASE B: HUMAN REVIEW QUEUE ─────────────────────────────
 model ApprovalItem {
   id          String    @id @default(cuid())

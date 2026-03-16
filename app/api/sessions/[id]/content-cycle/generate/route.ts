@@ -111,6 +111,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   // Load niche intelligence
   const niche = await db.nicheIntelligence.findUnique({ where: { sessionId: id } })
+
+  // Load approved platform intelligence for the client's platforms
+  const approvedPlatformIntel = await db.platformIntelligence.findMany({
+    where: { platform: { in: platformList }, status: 'approved' },
+  })
   let icpVocabulary: string[] = []
   let icpTriggerWords: string[] = []
   let competitorDiffs: Array<{ competitor: string; ourDiff: string }> = []
@@ -250,6 +255,44 @@ Diferenciación competitiva: ${competitorDiffs.slice(0, 2).map(d => d.ourDiff).j
 Plantillas de hooks probadas:
 ${hookTemplates.slice(0, 4).map(h => `  [${h.stage?.toUpperCase()}] ${h.structure} → "${h.example}"`).join('\n')}`) : ''
 
+  // Platform intelligence section — only included if approved records exist
+  const platformIntelSection = approvedPlatformIntel.length > 0 ? (lang === 'en'
+    ? `\nPLATFORM INTELLIGENCE (approved by team — use this to optimize each piece per platform):\n` +
+      approvedPlatformIntel.map(pi => {
+        let prios: string[] = []
+        let formats: Array<{ format: string }> = []
+        let trends: Array<{ trend: string; angle: string }> = []
+        let avoid: Array<{ what: string }> = []
+        try { prios = JSON.parse(pi.algorithmPriorities) } catch { /* ignore */ }
+        try { formats = JSON.parse(pi.bestFormats) } catch { /* ignore */ }
+        try { trends = JSON.parse(pi.currentTrends) } catch { /* ignore */ }
+        try { avoid = JSON.parse(pi.avoidList) } catch { /* ignore */ }
+        return `${pi.platform.toUpperCase()}:
+  Algorithm rewards: ${prios.slice(0, 3).join(' | ')}
+  Best formats: ${formats.slice(0, 2).map(f => f.format).join(', ')}
+  Frequency: ${pi.bestFrequency}
+  Trending: ${trends.slice(0, 2).map(t => t.angle).join(' | ')}
+  Avoid: ${avoid.slice(0, 2).map(a => a.what).join(', ')}${pi.teamNotes ? `\n  Team note: ${pi.teamNotes}` : ''}`
+      }).join('\n\n')
+    : `\nINTELIGENCIA DE PLATAFORMAS (aprobada por el equipo — úsala para optimizar cada pieza por plataforma):\n` +
+      approvedPlatformIntel.map(pi => {
+        let prios: string[] = []
+        let formats: Array<{ format: string }> = []
+        let trends: Array<{ trend: string; angle: string }> = []
+        let avoid: Array<{ what: string }> = []
+        try { prios = JSON.parse(pi.algorithmPriorities) } catch { /* ignore */ }
+        try { formats = JSON.parse(pi.bestFormats) } catch { /* ignore */ }
+        try { trends = JSON.parse(pi.currentTrends) } catch { /* ignore */ }
+        try { avoid = JSON.parse(pi.avoidList) } catch { /* ignore */ }
+        return `${pi.platform.toUpperCase()}:
+  El algoritmo premia: ${prios.slice(0, 3).join(' | ')}
+  Mejores formatos: ${formats.slice(0, 2).map(f => f.format).join(', ')}
+  Frecuencia: ${pi.bestFrequency}
+  Tendencias: ${trends.slice(0, 2).map(t => t.angle).join(' | ')}
+  Evitar: ${avoid.slice(0, 2).map(a => a.what).join(', ')}${pi.teamNotes ? `\n  Nota del equipo: ${pi.teamNotes}` : ''}`
+      }).join('\n\n')
+  ) : ''
+
   const briefSection = brief ? (lang === 'en'
     ? `\nCONTENT BRIEF (extracted from strategy — this is your north star):
 WHAT WE SELL: ${brief.exactProduct}
@@ -301,6 +344,7 @@ APPROVED CTAs FOR THIS BUSINESS TYPE:
 ${ctaList.map(c => `- ${c}`).join('\n')}
 ${briefSection}
 ${nicheSection}
+${platformIntelSection}
 
 ${funnelDistribution}
 
@@ -343,6 +387,7 @@ CTAs APROBADOS PARA ESTE TIPO DE NEGOCIO:
 ${ctaList.map(c => `- ${c}`).join('\n')}
 ${briefSection}
 ${nicheSection}
+${platformIntelSection}
 
 ${funnelDistribution}
 

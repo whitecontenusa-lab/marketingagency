@@ -344,11 +344,30 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
         )
       }
 
+      // Load approved platform intelligence for the client's channels
+      const sessionChannels = session.channels.split(',').map(c => c.trim()).filter(Boolean)
+      const platformChannels = sessionChannels.length > 0 ? sessionChannels : ['instagram', 'tiktok', 'facebook']
+      const platformIntelRecords = await db.platformIntelligence.findMany({
+        where: { platform: { in: platformChannels }, status: 'approved' },
+      })
+      const platformIntelligence = platformIntelRecords.length > 0
+        ? platformIntelRecords.map(pi => ({
+            platform: pi.platform,
+            algorithmPriorities: (() => { try { return JSON.parse(pi.algorithmPriorities) } catch { return [] } })(),
+            bestFormats: (() => { try { return JSON.parse(pi.bestFormats) } catch { return [] } })(),
+            bestFrequency: pi.bestFrequency,
+            currentTrends: (() => { try { return JSON.parse(pi.currentTrends) } catch { return [] } })(),
+            avoidList: (() => { try { return JSON.parse(pi.avoidList) } catch { return [] } })(),
+            teamNotes: pi.teamNotes,
+          }))
+        : null
+
       const enrichedData = {
         ...interviewData,
         ...(marketIntelligence ? { marketIntelligence } : {}),
         ...(agencyLearnings.length ? { agencyLearnings } : {}),
         ...(nicheIntelligence ? { nicheIntelligence } : {}),
+        ...(platformIntelligence ? { platformIntelligence } : {}),
       }
 
       await githubPushFile(

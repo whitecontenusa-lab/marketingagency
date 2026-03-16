@@ -68,6 +68,7 @@ export default async function DashboardPage() {
         <div className="flex items-center gap-3">
           <Suspense fallback={null}><QueueBadge /></Suspense>
           <Link href="/dashboard/cola" className="text-sm text-zinc-500 hover:text-zinc-900 transition">Cola</Link>
+          <Link href="/dashboard/plataformas" className="text-sm text-zinc-500 hover:text-zinc-900 transition">🌐 Plataformas</Link>
           <Link href="/dashboard/settings" className="text-sm text-zinc-500 hover:text-zinc-900 transition">
             Ajustes
           </Link>
