@@ -60,12 +60,12 @@ export const t = {
     // Step 5 — Audience (was step 4)
     step4Title: 'A quién le cambias la vida',
     step4Subtitle: 'No "todo el mundo". Una persona específica con un problema real. Cuéntanos quién es.',
-    icpDemographic: '¿Quién es? Descríbelo como si fuera una persona real',
-    icpDemographicHint: 'Edad, qué hace, dónde vive, cómo es su día a día. Mientras más específico, mejor.',
-    icpPain: '¿Con qué lucha todos los días?',
-    icpPainHint: 'El problema que lo mantiene despierto. El que siente en el estómago.',
-    icpDesire: '¿Qué quiere lograr de verdad?',
-    icpDesireHint: 'No el resultado funcional — la transformación. Cómo quiere sentirse.',
+    icpDemographic: '¿Quién es tu cliente ideal? Descríbelo como una persona real',
+    icpDemographicHint: 'Edad, qué hace, dónde vive, cómo es su día a día. Ej: "Mujer de 35 años, emprendedora en Bogotá, maneja un negocio de ropa desde casa".',
+    icpPain: '¿Cuál es el mayor problema que TU CLIENTE tiene y que tú resuelves?',
+    icpPainHint: 'Escribe desde la perspectiva de ELLOS, no la tuya. Ej: "Le cuesta conseguir clientes estables" o "No duerme bien por el estrés laboral" o "Siente que su marca no se ve profesional". NO escribas tu problema de negocio.',
+    icpDesire: '¿Qué quiere lograr tu cliente después de trabajar contigo o usar tu producto?',
+    icpDesireHint: 'La transformación que ellos buscan. Ej: "Tener ingresos predecibles cada mes" o "Sentirse con energía y sin dolor" o "Que su marca inspire confianza desde el primer vistazo".',
 
     // Step 6 — Business / Value Proposition (branched by businessType)
     step5Title: 'Tu propuesta de valor',
@@ -232,11 +232,11 @@ export const t = {
     step4Title: "Who you're changing lives for",
     step4Subtitle: 'Not "everyone". One specific person with a real problem. Tell us who they are.',
     icpDemographic: 'Who are they? Describe them as if they were a real person',
-    icpDemographicHint: 'Age, what they do, where they live, what their day looks like. The more specific, the better.',
-    icpPain: 'What do they struggle with every day?',
-    icpPainHint: 'The problem that keeps them up at night. The one they feel in their gut.',
-    icpDesire: 'What do they really want to achieve?',
-    icpDesireHint: "Not the functional result — the transformation. How they want to feel.",
+    icpDemographicHint: 'Age, what they do, where they live, what their day looks like. E.g.: "35-year-old woman, freelance designer in NYC, works from home and manages her own clients".',
+    icpPain: "What is the biggest problem YOUR CLIENT has that you solve?",
+    icpPainHint: "Write from THEIR perspective, not yours. E.g.: 'They can't get consistent clients' or 'They feel exhausted and burnt out' or 'Their brand looks unprofessional'. Do NOT write your own business problem.",
+    icpDesire: 'What does your client want to achieve after using your product or working with you?',
+    icpDesireHint: "The transformation they're looking for. E.g.: 'Predictable monthly income' or 'Wake up with energy and no pain' or 'A brand that commands respect from day one'.",
 
     // Step 6 — Business / Value Proposition (branched by businessType)
     step5Title: 'Your value proposition',
