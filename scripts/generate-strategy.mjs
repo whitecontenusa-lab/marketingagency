@@ -196,6 +196,38 @@ USE THIS MARKET INTELLIGENCE to make the strategy more specific and grounded in 
 The simulationNotes should reference these competitors and trends specifically.
 ` : ''}
 
+${s.nicheIntelligence ? `
+NICHE INTELLIGENCE (deep audience + competitive analysis):
+
+ICP EXACT VOCABULARY (use these phrases verbatim in PERFIL.md and CONTENIDO_MADRE.md):
+${Array.isArray(s.nicheIntelligence.icpVocabulary) ? s.nicheIntelligence.icpVocabulary.map((v, i) => `${i + 1}. "${v}"`).join('\n') : ''}
+
+ICP TRIGGER WORDS (include in hooks and CTAs):
+${Array.isArray(s.nicheIntelligence.icpTriggerWords) ? s.nicheIntelligence.icpTriggerWords.join(', ') : ''}
+
+ICP OBJECTIONS + REBUTTALS (address these in FUNNEL.md and CONTENIDO_MADRE.md):
+${Array.isArray(s.nicheIntelligence.icpObjections) ? s.nicheIntelligence.icpObjections.map(o => `- "${o.objection}" → ${o.rebuttal}`).join('\n') : ''}
+
+COMPETITIVE DIFFERENTIATION (use in PERFIL.md positioning and CONTENIDO_MADRE.md hooks):
+${Array.isArray(s.nicheIntelligence.competitorDiffs) ? s.nicheIntelligence.competitorDiffs.map(d => `- vs ${d.competitor}: ${d.ourDiff}`).join('\n') : ''}
+
+UNIQUE POSITIONING ANGLE TO OWN:
+${s.nicheIntelligence.positioningAngle || 'Not analyzed'}
+
+TOP-PERFORMING CONTENT FORMATS IN THIS NICHE:
+${Array.isArray(s.nicheIntelligence.dominantFormats) ? s.nicheIntelligence.dominantFormats.map(f => `- ${f.platform}: ${f.topFormat} (${f.avgEngagement} engagement) — ${f.why}`).join('\n') : ''}
+
+PROVEN HOOK TEMPLATES (use as starting points in CONTENIDO_MADRE.md examples):
+${Array.isArray(s.nicheIntelligence.hookTemplates) ? s.nicheIntelligence.hookTemplates.map((h, i) => `${i + 1}. [${h.stage?.toUpperCase()}] "${h.structure}" → Example: "${h.example}"`).join('\n') : ''}
+
+CRITICAL INSTRUCTIONS FOR USING NICHE INTELLIGENCE:
+- PERFIL.md: ICP section must use the exact vocabulary listed above, NOT generic marketing language
+- CONTENIDO_MADRE.md: Each content pillar must include 2 real post examples using these hook templates
+- FUNNEL.md: Address the 3 objections listed above with the provided rebuttals in the MOFU section
+- simulationNotes: Must reference the positioning angle and at least 2 competitive differentiation points
+- All hook examples in CONTENIDO_MADRE.md must use ICP trigger words
+` : ''}
+
 ${s.agencyLearnings?.length ? `
 AGENCY LEARNINGS (from similar past clients):
 ${s.agencyLearnings.map((l, i) => `${i + 1}. ${l}`).join('\n')}

@@ -87,13 +87,40 @@ Be specific to ${session.industry} in ${session.country}. Include 3-4 competitor
 async function enrichWithIntelligence(
   sessionId: string,
   industry: string,
+  businessType: string,
   session: Parameters<typeof ensureMarketIntelligence>[1],
-): Promise<{ marketIntelligence: Record<string, unknown> | null; agencyLearnings: string[] }> {
-  const [marketIntelligence, learnings] = await Promise.all([
+): Promise<{
+  marketIntelligence: Record<string, unknown> | null
+  agencyLearnings: string[]
+  nicheIntelligence: Record<string, unknown> | null
+}> {
+  const [marketIntelligence, learnings, existingNiche] = await Promise.all([
     ensureMarketIntelligence(sessionId, session),
-    db.agencyLearning.findMany({ where: { industry }, orderBy: { createdAt: 'desc' }, take: 10 }),
+    db.agencyLearning.findMany({
+      where: businessType
+        ? { industry, archetype: { not: undefined } }  // broad filter — can't filter by businessType directly
+        : { industry },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    }),
+    db.nicheIntelligence.findUnique({ where: { sessionId } }),
   ])
-  return { marketIntelligence, agencyLearnings: learnings.map(l => l.insight) }
+
+  // Return existing niche intel if available (don't regenerate on every analyze)
+  let nicheIntelligence: Record<string, unknown> | null = null
+  if (existingNiche) {
+    nicheIntelligence = {
+      icpVocabulary:    (() => { try { return JSON.parse(existingNiche.icpVocabulary) } catch { return [] } })(),
+      icpObjections:    (() => { try { return JSON.parse(existingNiche.icpObjections) } catch { return [] } })(),
+      icpTriggerWords:  (() => { try { return JSON.parse(existingNiche.icpTriggerWords) } catch { return [] } })(),
+      competitorDiffs:  (() => { try { return JSON.parse(existingNiche.competitorDiffs) } catch { return [] } })(),
+      positioningAngle: existingNiche.positioningAngle,
+      dominantFormats:  (() => { try { return JSON.parse(existingNiche.dominantFormats) } catch { return [] } })(),
+      hookTemplates:    (() => { try { return JSON.parse(existingNiche.hookTemplates) } catch { return [] } })(),
+    }
+  }
+
+  return { marketIntelligence, agencyLearnings: learnings.map(l => l.insight), nicheIntelligence }
 }
 
 async function generateBrandBrief(sessionId: string, session: { clientName: string; brandName: string; industry: string; purpose: string; values: string; language: string }) {
@@ -159,6 +186,87 @@ Responde SOLO un objeto JSON con estas claves:
   })
 }
 
+async function generateNicheIntelligence(sessionId: string, session: {
+  clientName: string; brandName: string; industry: string; country: string
+  channels: string; productDescription: string; icpPain: string; icpDesire: string
+  icpDemographic: string; purpose: string; values: string; businessType: string; language: string
+}) {
+  const lang = session.language === 'en' ? 'English' : 'Spanish'
+  const brandName = session.brandName || session.clientName
+
+  // Get competitor context from existing market intel
+  const existing = await db.marketIntelligence.findUnique({ where: { sessionId } })
+  let competitors: Array<{ name: string; positioning: string; weakness: string }> = []
+  if (existing?.competitors) {
+    try { competitors = JSON.parse(existing.competitors) } catch { /* ignore */ }
+  }
+  const competitorList = competitors.map(c => `- ${c.name}: "${c.positioning}" (weakness: ${c.weakness})`).join('\n') || 'Not yet analyzed'
+  const channels = session.channels.split(',').filter(Boolean)
+  const channelList = channels.length > 0 ? channels.join(', ') : 'instagram, tiktok, facebook'
+
+  const stepAPrompt = `CRITICAL EXECUTION MODE: Non-interactive pipeline. Output a single raw JSON object — nothing else.
+
+You are a consumer psychologist. Deeply profile the ICP for this brand.
+BRAND: ${brandName} | INDUSTRY: ${session.industry} | COUNTRY: ${session.country}
+PRODUCT: ${session.productDescription}
+ICP PAIN: ${session.icpPain} | ICP DESIRE: ${session.icpDesire}
+ICP DEMOGRAPHIC: ${session.icpDemographic}
+
+Respond in ${lang}. Output ONLY this JSON:
+{"icpVocabulary":["exact phrase ICP uses for their problem","phrase for searching solutions","phrase for desired transformation","phrase in social media posts","phrase when recommending"],"icpObjections":[{"objection":"exact words","rebuttal":"counter in their own language"},{"objection":"second","rebuttal":"counter"},{"objection":"third","rebuttal":"counter"}],"icpTriggerWords":["word that stops scroll","word signaling credibility","word creating urgency","word creating belonging","emotional transformation word"]}`
+
+  const stepBPrompt = `CRITICAL EXECUTION MODE: Non-interactive pipeline. Output a single raw JSON object — nothing else.
+
+You are a competitive strategist. Identify differentiation angles for this brand.
+BRAND: ${brandName} | INDUSTRY: ${session.industry} | COUNTRY: ${session.country}
+PURPOSE: ${session.purpose} | VALUES: ${session.values}
+COMPETITORS:\n${competitorList}
+
+Respond in ${lang}. Output ONLY this JSON:
+{"competitorDiffs":[{"competitor":"name/category","theirAngle":"what they emphasize","ourDiff":"how ${brandName} stands out"},{"competitor":"second","theirAngle":"angle","ourDiff":"diff"}],"positioningAngle":"Single sentence: the ONE unique angle ${brandName} should own — specific and competitor-proof","competitiveGap":"2-3 sentences: what NO competitor does that ${brandName} could own"}`
+
+  const stepCPrompt = `CRITICAL EXECUTION MODE: Non-interactive pipeline. Output a single raw JSON object — nothing else.
+
+You are a content format analyst. Identify top-performing content formats in this niche.
+BRAND: ${brandName} | INDUSTRY: ${session.industry} | PLATFORMS: ${channelList}
+
+Respond in ${lang}. Output ONLY this JSON:
+{"dominantFormats":[{"platform":"instagram","topFormat":"reel","why":"why this format wins in ${session.industry}","avgEngagement":"high"},{"platform":"tiktok","topFormat":"video","why":"why","avgEngagement":"high"}],"hookTemplates":[{"structure":"hook template with [BLANK]","example":"filled example for ${brandName}","stage":"tofu"},{"structure":"second template","example":"example","stage":"tofu"},{"structure":"third","example":"example","stage":"mofu"},{"structure":"fourth","example":"example","stage":"mofu"},{"structure":"fifth","example":"example","stage":"bofu"}]}`
+
+  let stepA: Record<string, unknown> = {}
+  let stepB: Record<string, unknown> = {}
+  let stepC: Record<string, unknown> = {}
+
+  try { const r = await runClaudeSubprocess(stepAPrompt, 90_000); const m = r.match(/\{[\s\S]*\}/); if (m) stepA = JSON.parse(m[0]) } catch (e) { console.warn('[niche] stepA failed:', e) }
+  try { const r = await runClaudeSubprocess(stepBPrompt, 90_000); const m = r.match(/\{[\s\S]*\}/); if (m) stepB = JSON.parse(m[0]) } catch (e) { console.warn('[niche] stepB failed:', e) }
+  try { const r = await runClaudeSubprocess(stepCPrompt, 90_000); const m = r.match(/\{[\s\S]*\}/); if (m) stepC = JSON.parse(m[0]) } catch (e) { console.warn('[niche] stepC failed:', e) }
+
+  await db.nicheIntelligence.upsert({
+    where: { sessionId },
+    update: {
+      icpVocabulary:    JSON.stringify(stepA.icpVocabulary ?? []),
+      icpObjections:    JSON.stringify(stepA.icpObjections ?? []),
+      icpTriggerWords:  JSON.stringify(stepA.icpTriggerWords ?? []),
+      competitorDiffs:  JSON.stringify(stepB.competitorDiffs ?? []),
+      positioningAngle: String(stepB.positioningAngle ?? ''),
+      dominantFormats:  JSON.stringify(stepC.dominantFormats ?? []),
+      hookTemplates:    JSON.stringify(stepC.hookTemplates ?? []),
+      generatedAt:      new Date(),
+    },
+    create: {
+      sessionId,
+      icpVocabulary:    JSON.stringify(stepA.icpVocabulary ?? []),
+      icpObjections:    JSON.stringify(stepA.icpObjections ?? []),
+      icpTriggerWords:  JSON.stringify(stepA.icpTriggerWords ?? []),
+      competitorDiffs:  JSON.stringify(stepB.competitorDiffs ?? []),
+      positioningAngle: String(stepB.positioningAngle ?? ''),
+      dominantFormats:  JSON.stringify(stepC.dominantFormats ?? []),
+      hookTemplates:    JSON.stringify(stepC.hookTemplates ?? []),
+    },
+  })
+  console.log(`[analyze] Niche intelligence saved for session ${sessionId}`)
+}
+
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const teamSession = await getSession()
   if (!teamSession) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -215,11 +323,19 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
     try {
       // B6: Auto-run market research if not already done, then enrich interview data
-      const { marketIntelligence, agencyLearnings } = await enrichWithIntelligence(
+      const { marketIntelligence, agencyLearnings, nicheIntelligence } = await enrichWithIntelligence(
         id,
         session.industry,
+        session.businessType,
         session,
       )
+
+      // Fire-and-forget: generate niche intelligence if not yet done
+      if (!nicheIntelligence) {
+        generateNicheIntelligence(id, session).catch(err =>
+          console.warn('[analyze] Niche intelligence generation failed (non-fatal):', err)
+        )
+      }
 
       // B — Brand brief for clients without branding
       if (!session.hasBranding && !session.brandBriefGenerated) {
@@ -232,6 +348,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
         ...interviewData,
         ...(marketIntelligence ? { marketIntelligence } : {}),
         ...(agencyLearnings.length ? { agencyLearnings } : {}),
+        ...(nicheIntelligence ? { nicheIntelligence } : {}),
       }
 
       await githubPushFile(

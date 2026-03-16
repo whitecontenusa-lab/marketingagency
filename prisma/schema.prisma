@@ -348,6 +348,7 @@ model OnboardingSession {
   campaigns            Campaign[]
   contentPieces        ContentPiece[]
   marketIntelligence   MarketIntelligence?
+  nicheIntelligence    NicheIntelligence?
   contentCycles        ContentCycle[]
   reports              ClientReport[]
 }
@@ -465,6 +466,20 @@ model MarketIntelligence {
   session     OnboardingSession @relation(fields: [sessionId], references: [id])
 }
 
+model NicheIntelligence {
+  id               String            @id @default(cuid())
+  sessionId        String            @unique
+  icpVocabulary    String            @default("") // JSON: exact phrases the ICP uses
+  icpObjections    String            @default("") // JSON: real objections + rebuttals
+  icpTriggerWords  String            @default("") // JSON: words/phrases that trigger action
+  competitorDiffs  String            @default("") // JSON: angles to differentiate from each competitor
+  dominantFormats  String            @default("") // JSON: best-performing formats per platform in this niche
+  hookTemplates    String            @default("") // JSON: proven hook structures for this niche
+  positioningAngle String            @default("") // the single unique angle this brand should own
+  generatedAt      DateTime          @default(now())
+  session          OnboardingSession @relation(fields: [sessionId], references: [id])
+}
+
 model AgencyLearning {
   id         String   @id @default(cuid())
   industry   String
@@ -510,6 +525,8 @@ model ContentPiece {
   aiGenerated Boolean   @default(false)
   releasedAt  DateTime?
   cycleId     String?
+  funnelStage String    @default("")  // tofu | mofu | bofu
+  week        Int       @default(0)   // 1-4 within the monthly cycle
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   session     OnboardingSession @relation(fields: [sessionId], references: [id])

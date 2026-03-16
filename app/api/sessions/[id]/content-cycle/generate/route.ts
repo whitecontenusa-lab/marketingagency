@@ -41,6 +41,51 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const lang = session.language === 'en' ? 'en' : 'es'
   const platformList = channels.length > 0 ? channels : ['instagram', 'tiktok', 'facebook']
 
+  // Load niche intelligence for ICP vocabulary + differentiation angles
+  const niche = await db.nicheIntelligence.findUnique({ where: { sessionId: id } })
+  let icpVocabulary: string[] = []
+  let icpTriggerWords: string[] = []
+  let competitorDiffs: Array<{ competitor: string; ourDiff: string }> = []
+  let hookTemplates: Array<{ structure: string; example: string; stage: string }> = []
+  let positioningAngle = ''
+
+  if (niche) {
+    try { icpVocabulary = JSON.parse(niche.icpVocabulary) } catch { /* ignore */ }
+    try { icpTriggerWords = JSON.parse(niche.icpTriggerWords) } catch { /* ignore */ }
+    try { competitorDiffs = JSON.parse(niche.competitorDiffs) } catch { /* ignore */ }
+    try { hookTemplates = JSON.parse(niche.hookTemplates) } catch { /* ignore */ }
+    positioningAngle = niche.positioningAngle
+  }
+
+  // Build funnel distribution: 15 TOFU, 10 MOFU, 5 BOFU (assigned in output)
+  const funnelDistribution = lang === 'en'
+    ? `FUNNEL STAGE DISTRIBUTION (you MUST tag each piece with funnelStage and week):
+- 15 pieces tagged "tofu" (awareness, problem education, brand introduction — NO selling)
+- 10 pieces tagged "mofu" (consideration, objection handling, case studies, comparisons — light selling)
+- 5 pieces tagged "bofu" (decision, offers, testimonials, urgency — direct selling)
+- Distribute across 4 weeks: week 1 = 8 pieces, week 2 = 8 pieces, week 3 = 7 pieces, week 4 = 7 pieces`
+    : `DISTRIBUCIÓN POR ETAPA DE FUNNEL (DEBES etiquetar cada pieza con funnelStage y week):
+- 15 piezas etiquetadas "tofu" (conciencia, educación del problema, introducción de marca — SIN vender)
+- 10 piezas etiquetadas "mofu" (consideración, manejo de objeciones, casos de estudio — venta suave)
+- 5 piezas etiquetadas "bofu" (decisión, ofertas, testimonios, urgencia — venta directa)
+- Distribuidas en 4 semanas: semana 1 = 8 piezas, semana 2 = 8 piezas, semana 3 = 7 piezas, semana 4 = 7 piezas`
+
+  const nicheContext = niche ? (lang === 'en'
+    ? `NICHE INTELLIGENCE (use this to write better hooks and body):
+ICP exact vocabulary (use these phrases): ${icpVocabulary.slice(0, 3).join(' | ')}
+ICP trigger words (use in hooks/CTAs): ${icpTriggerWords.slice(0, 4).join(', ')}
+Our positioning angle: ${positioningAngle}
+Key differentiations: ${competitorDiffs.slice(0, 2).map(d => d.ourDiff).join(' | ')}
+Proven hook templates:
+${hookTemplates.slice(0, 3).map(h => `  [${h.stage?.toUpperCase()}] "${h.structure}" → e.g. "${h.example}"`).join('\n')}`
+    : `INTELIGENCIA DE NICHO (usa esto para mejores hooks y cuerpos):
+Vocabulario exacto del ICP (usa estas frases): ${icpVocabulary.slice(0, 3).join(' | ')}
+Palabras disparador del ICP (usa en hooks/CTAs): ${icpTriggerWords.slice(0, 4).join(', ')}
+Nuestro ángulo de posicionamiento: ${positioningAngle}
+Diferenciaciones clave: ${competitorDiffs.slice(0, 2).map(d => d.ourDiff).join(' | ')}
+Plantillas de hooks probadas:
+${hookTemplates.slice(0, 3).map(h => `  [${h.stage?.toUpperCase()}] "${h.structure}" → ej. "${h.example}"`).join('\n')}`) : ''
+
   const prompt = lang === 'en'
     ? `CRITICAL EXECUTION MODE: You are running in a non-interactive pipeline. Output a single raw JSON array — nothing else. No markdown, no explanation, no code fences.
 
@@ -52,19 +97,25 @@ PRODUCT: ${String(session.productDescription ?? '').slice(0, 500)}
 ICP PAIN: ${session.icpPain}
 ICP DESIRE: ${session.icpDesire}
 CONTENT STRATEGY:
-${contenidoDoc.slice(0, 3000)}
+${contenidoDoc.slice(0, 2000)}
 
 PLATFORMS: ${platformList.join(', ')}
 
-Create exactly 30 content pieces distributed across the platforms. Output ONLY a JSON array:
-[{"platform":"instagram","format":"post","hook":"...","body":"...","cta":"...","hashtags":"..."},...]
+${nicheContext}
+
+${funnelDistribution}
+
+Create exactly 30 content pieces. Output ONLY a JSON array where each item includes funnelStage and week:
+[{"platform":"instagram","format":"reel","hook":"...","body":"...","cta":"...","hashtags":"...","funnelStage":"tofu","week":1},...]
 
 Requirements per piece:
-- hook: max 15 words (scroll-stopping opening)
-- body: 3-5 sentences in brand voice
-- cta: max 15 words
+- hook: max 15 words using ICP trigger words (scroll-stopping opening)
+- body: 3-5 sentences in brand voice using ICP vocabulary
+- cta: max 15 words aligned to funnelStage (tofu=follow/save, mofu=comment/DM, bofu=buy/book)
 - hashtags: 5-8 relevant hashtags
-- format: post|reel|story|carousel|video|email|article (matching platform)
+- format: reel|post|carousel|story|video|email|article (best for that platform + funnel stage)
+- funnelStage: "tofu" | "mofu" | "bofu" (follow the distribution above)
+- week: 1-4
 
 Output ONLY the JSON array.`
     : `CRITICAL EXECUTION MODE: You are running in a non-interactive pipeline. Output a single raw JSON array — nothing else. No markdown, no explanation, no code fences.
@@ -77,19 +128,25 @@ PRODUCTO: ${String(session.productDescription ?? '').slice(0, 500)}
 DOLOR ICP: ${session.icpPain}
 DESEO ICP: ${session.icpDesire}
 ESTRATEGIA DE CONTENIDO:
-${contenidoDoc.slice(0, 3000)}
+${contenidoDoc.slice(0, 2000)}
 
 PLATAFORMAS: ${platformList.join(', ')}
 
-Crea exactamente 30 piezas de contenido distribuidas entre las plataformas. Responde SOLO un array JSON:
-[{"platform":"instagram","format":"post","hook":"...","body":"...","cta":"...","hashtags":"..."},...]
+${nicheContext}
+
+${funnelDistribution}
+
+Crea exactamente 30 piezas de contenido. Responde SOLO un array JSON donde cada item incluye funnelStage y week:
+[{"platform":"instagram","format":"reel","hook":"...","body":"...","cta":"...","hashtags":"...","funnelStage":"tofu","week":1},...]
 
 Requisitos por pieza:
-- hook: máx 15 palabras (apertura que detiene el scroll)
-- body: 3-5 oraciones en la voz de la marca
-- cta: máx 15 palabras
+- hook: máx 15 palabras usando palabras disparador del ICP (apertura que detiene el scroll)
+- body: 3-5 oraciones en la voz de la marca usando vocabulario del ICP
+- cta: máx 15 palabras alineado al funnelStage (tofu=seguir/guardar, mofu=comentar/DM, bofu=comprar/reservar)
 - hashtags: 5-8 hashtags relevantes
-- format: post|reel|story|carousel|video|email|article (según la plataforma)
+- format: reel|post|carousel|story|video|email|article (mejor para esa plataforma + etapa de funnel)
+- funnelStage: "tofu" | "mofu" | "bofu" (sigue la distribución arriba)
+- week: 1-4
 
 Responde SOLO el array JSON.`
 
@@ -122,6 +179,8 @@ Responde SOLO el array JSON.`
           aiGenerated: true,
           status: 'ready',
           releasedAt,
+          funnelStage: String(p.funnelStage ?? ''),
+          week: typeof p.week === 'number' ? p.week : 0,
         },
       })
     )
